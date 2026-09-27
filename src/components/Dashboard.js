@@ -337,7 +337,7 @@ function Dashboard() {
       navigate('/editor', { 
         state: { 
           blogId: selectedBlog.id,
-          title: `Cópia de ${postData.title}`,
+          title: t('dashboard.posts.actions.copyOf', { title: postData.title }),
           content: postData.content,
           labels: postData.labels
         } 
@@ -451,8 +451,8 @@ function Dashboard() {
           : b.title.localeCompare(a.title);
       }
 
-      const dateA = new Date(a.published || a.scheduled || a.updated || 0);
-      const dateB = new Date(b.published || b.scheduled || b.updated || 0);
+      const dateA = new Date(a.published || a.updated || 0);
+      const dateB = new Date(b.published || b.updated || 0);
       return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
     });
   }, [posts, sortBy, statusFilter, sortOrder, tagFilter]);
@@ -488,7 +488,7 @@ function Dashboard() {
     if (!dateString) return 'N/A';
     
     try {
-      return new Date(dateString).toLocaleDateString('pt-BR', {
+      return new Date(dateString).toLocaleString(i18n.getLocale(), {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
@@ -738,7 +738,7 @@ function Dashboard() {
                             
                         <span className="post-date">
                               {post.status === 'SCHEDULED'
-                                ? t('dashboard.posts.dates.scheduledFor', { date: formatDate(post.scheduled || post.updated) })
+                                ? t('dashboard.posts.dates.scheduledFor', { date: formatDate(post.published || post.updated) })
                                 : post.status === 'LIVE'
                                   ? t('dashboard.posts.dates.publishedOn', { date: formatDate(post.published) })
                                   : t('dashboard.posts.dates.updatedOn', { date: formatDate(post.updated) })

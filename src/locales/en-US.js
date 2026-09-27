@@ -82,6 +82,7 @@ const translations = {
         actions: {
           edit: 'Edit',
           duplicate: 'Duplicate',
+          copyOf: 'Copy of {title}',
           delete: 'Delete',
           view: 'View',
           confirmDelete: 'Are you sure you want to delete this post? This action cannot be undone.'
@@ -133,6 +134,7 @@ const translations = {
       },
       templates: {
         select: 'Select template',
+        replaceConfirm: 'Applying the template replaces the current post content. Continue?',
         none: 'None',
         templateName: 'Template name:'
       },
