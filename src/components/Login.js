@@ -36,7 +36,7 @@ function Login() {
       
       try {
         // IMPORTANTE: Usar tokenResponse.access_token, não credential
-        const tokenSaved = AuthService.setAuthToken(tokenResponse.access_token);
+        const tokenSaved = AuthService.setAuthToken(tokenResponse.access_token, tokenResponse.expires_in);
         
         if (!tokenSaved) {
           throw new Error('Failed to save authentication token');
@@ -44,10 +44,7 @@ function Login() {
 
         await AuthService.fetchCurrentAccount();
         
-        // Redirect to dashboard
-        setTimeout(() => {
-          navigate('/dashboard', { replace: true });
-        }, 500);
+        navigate('/dashboard', { replace: true });
       } catch (err) {
         console.error('Error during login process:', err);
         setError(t('auth.loginError', { message: err.message }));

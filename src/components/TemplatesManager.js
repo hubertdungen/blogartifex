@@ -208,6 +208,7 @@ function TemplatesManager({ theme }) {
    */
   const handleImportTemplates = (e) => {
     const file = e.target.files[0];
+    e.target.value = ''; // permite voltar a importar o mesmo ficheiro
     
     if (!file) return;
     
@@ -434,7 +435,7 @@ function TemplatesManager({ theme }) {
                     <p className="template-description">{template.description}</p>
                   )}
                   <p className="template-date">
-                    Atualizado em: {formatDate(template.updatedAt || template.createdAt)}
+                    {t('dashboard.posts.dates.updatedOn', { date: formatDate(template.updatedAt || template.createdAt) })}
                   </p>
                 </div>
                 
@@ -533,7 +534,7 @@ function TemplatesManager({ theme }) {
                     toolbar: [
                       'heading',
                       '|',
-                      'bold', 'italic', 'strikethrough', 'underline',
+                      'bold', 'italic',
                       '|',
                       'link', 'bulletedList', 'numberedList',
                       '|',

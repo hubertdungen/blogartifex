@@ -39,7 +39,7 @@ export const AI_PROVIDERS = {
   anthropic: {
     id: 'anthropic',
     label: 'Anthropic (Claude)',
-    models: ['claude-opus-4-8', 'claude-sonnet-5', 'claude-fable-5', 'claude-haiku-4-5'],
+    models: ['claude-opus-5', 'claude-fable-5-1', 'claude-sonnet-5', 'claude-opus-4-8', 'claude-fable-5', 'claude-haiku-4-5'],
     defaultModel: 'claude-sonnet-5',
     keyPlaceholder: 'sk-ant-...',
     keyUrl: 'https://console.anthropic.com/settings/keys'
@@ -201,15 +201,28 @@ const isValidAction = (action) => {
  * Removes obviously dangerous markup from model-generated HTML before it
  * reaches the editor (defence in depth – CKEditor filters too).
  */
+const DANGEROUS_TAGS = 'script,style,iframe,object,embed,form,base,meta,link';
+const URL_ATTRS = ['href', 'src', 'xlink:href', 'action', 'formaction'];
+const HAS_SCHEME = /^[a-z][a-z0-9+.-]*:/i;
+const SAFE_SCHEME = /^(https?:|mailto:|tel:|data:image\/(png|gif|jpe?g|webp);)/i;
+
 export const sanitizeAIHtml = (html) => {
   if (!html) return '';
-  return html
-    .replace(/<script[\s\S]*?<\/script>/gi, '')
-    .replace(/<style[\s\S]*?<\/style>/gi, '')
-    .replace(/<(iframe|object|embed|form)[\s\S]*?<\/\1>/gi, '')
-    .replace(/\son\w+\s*=\s*"[^"]*"/gi, '')
-    .replace(/\son\w+\s*=\s*'[^']*'/gi, '')
-    .replace(/javascript:/gi, '');
+  // Parse instead of regex so unquoted handlers and entity-encoded schemes
+  // (jav&#x61;script:) are seen the way the browser will see them.
+  const doc = new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html');
+  doc.body.querySelectorAll(DANGEROUS_TAGS).forEach(el => el.remove());
+  doc.body.querySelectorAll('*').forEach(el => {
+    Array.from(el.attributes).forEach(({ name, value }) => {
+      const lower = name.toLowerCase();
+      // eslint-disable-next-line no-control-regex -- browsers ignore these inside URLs
+      const url = value.replace(/[\s\u0000-\u001f]/g, '');
+      if (lower.startsWith('on') || (URL_ATTRS.includes(lower) && HAS_SCHEME.test(url) && !SAFE_SCHEME.test(url))) {
+        el.removeAttribute(name);
+      }
+    });
+  });
+  return doc.body.innerHTML;
 };
 
 const MAX_CONTEXT_HTML = 60000;
@@ -382,6 +395,19 @@ export const complete = async ({ system, messages, maxTokens = 8192 }) => {
 };
 
 /**
+ * Last turns of the chat that providers accept: no empty/error entries, and
+ * starting with a user turn (Anthropic rejects a leading assistant message).
+ */
+export const trimHistory = (history) => {
+  const turns = history
+    .filter(m => !m.error && m.content && m.content.trim())
+    .slice(-8)
+    .map(m => ({ role: m.role, content: m.content }));
+  while (turns.length && turns[0].role !== 'user') turns.shift();
+  return turns;
+};
+
+/**
  * Chat with the editor assistant. Returns { reply, actions }.
  */
 export const chat = async ({ history = [], userMessage, title, html, selectionHtml, templates, locale = 'en-US' }) => {
@@ -392,7 +418,7 @@ export const chat = async ({ history = [], userMessage, title, html, selectionHt
   // Older turns are sent as plain text (no document snapshots) to keep
   // requests small; the current turn carries the fresh article HTML.
   const messages = [
-    ...history.slice(-8).map(m => ({ role: m.role, content: m.content })),
+    ...trimHistory(history),
     { role: 'user', content: contextMessage }
   ];
 
@@ -444,7 +470,8 @@ export const testConnection = async () => {
   const raw = await complete({
     system: 'You are a connectivity test. Answer with the single word: OK',
     messages: [{ role: 'user', content: 'ping' }],
-    maxTokens: 20
+    // Reasoning models spend tokens thinking before answering; 20 left the reply empty.
+    maxTokens: 1024
   });
   return raw.trim();
 };

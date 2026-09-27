@@ -57,7 +57,7 @@ const translations = {
         postsByMonth: 'Publicações por Mês'
       },
       messages: {
-        loadBlogsError: 'Erro ao carregar os blogs: {error}',
+        loadBlogsError: 'Erro ao carregar os blogues: {error}',
         loadPostsError: 'Erro ao carregar os artigos: {error}',
         duplicating: 'A carregar o artigo para duplicar...',
         duplicateError: 'Erro ao duplicar o artigo: {error}',
@@ -82,8 +82,9 @@ const translations = {
         actions: {
           edit: 'Editar',
           duplicate: 'Duplicar',
+          copyOf: 'Cópia de {title}',
           delete: 'Eliminar',
-          view: 'Visualizar',
+          view: 'Ver',
           confirmDelete: 'Tem a certeza que deseja eliminar este artigo? Esta ação não pode ser desfeita.'
         },
         controls: {
@@ -101,7 +102,7 @@ const translations = {
             scheduled: 'Agendado'
           },
           category: 'Categoria:',
-          allTags: 'Todas as tags'
+          allTags: 'Todas as etiquetas'
         }
       }
     },
@@ -133,6 +134,7 @@ const translations = {
       },
       templates: {
         select: 'Selecionar modelo',
+        replaceConfirm: 'Aplicar o modelo substitui o conteúdo atual do artigo. Continuar?',
         none: 'Nenhum',
         templateName: 'Nome do modelo:'
       },
@@ -278,7 +280,7 @@ const translations = {
       templateDescription: 'Descrição (opcional):',
       templateContent: 'Conteúdo do Modelo:',
       placeholders: {
-        name: 'Digite um nome para o modelo',
+        name: 'Introduza um nome para o modelo',
         description: 'Uma breve descrição do modelo'
       },
       actions: {
@@ -302,7 +304,7 @@ const translations = {
       notifications: {
         saved: 'Modelo guardado com sucesso!',
         deleted: 'Modelo eliminado com sucesso!',
-        nameRequired: 'Por favor, informe um nome para o modelo.',
+        nameRequired: 'Por favor, indique um nome para o modelo.',
         contentRequired: 'O conteúdo do modelo não pode estar vazio.',
         editorNotReady: 'Editor não inicializado. Por favor, tente novamente.',
         noTemplatesExport: 'Não há modelos para exportar.',
@@ -313,7 +315,7 @@ const translations = {
         importError: 'Erro ao importar modelos: {message}',
         replaceOrMerge: 'Importar {count} modelos. Deseja substituir todos os modelos existentes?',
         replaceConfirm: 'OK para substituir ou Cancelar para juntar aos modelos existentes.',
-        conflictDetected: '{count} modelos têm IDs conflitantes.',
+        conflictDetected: '{count} modelos têm IDs em conflito.',
         conflictAction: 'Deseja substituir os modelos existentes com o mesmo ID?',
         conflictConfirm: 'OK para substituir ou Cancelar para manter os modelos existentes.',
         noValidTemplates: 'Nenhum modelo válido encontrado no ficheiro.',
@@ -363,7 +365,7 @@ const translations = {
         clientId: 'ID de Cliente do Google:',
         clientIdDesc: 'Insira o ID de Cliente obtido na Google Cloud Console.',
         showDebugger: 'Mostrar janela de depuração',
-        showDebuggerDesc: 'Exibe a janela de depuração de autenticação.'
+        showDebuggerDesc: 'Mostra a janela de depuração de autenticação.'
         },
       buttons: {
         save: 'Guardar Definições',
@@ -381,7 +383,7 @@ const translations = {
         title: 'Sobre as Definições da API',
         steps: [
           'Criar um projeto na Google Cloud Console',
-          'Habilitar a API do Blogger',
+          'Ativar a API do Blogger',
           'Criar credenciais OAuth 2.0 para aplicação Web',
           'Adicionar {origin} como origem JavaScript autorizada',
           'Adicionar {origin} como URI de redirecionamento'

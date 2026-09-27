@@ -81,6 +81,7 @@ function PostEditor({ theme, toggleTheme }) {
   const [editorInstance, setEditorInstance] = useState(null);
   const [showAIPanel, setShowAIPanel] = useState(() => getStoredValue('blogartifex_ai_panel_open') === 'true');
   const draftCheckedRef = useRef(false);
+  const wasLiveRef = useRef(false);
 
   useEffect(() => {
     autoSaveDataRef.current = { postData, metadata, selectedBlog, postId };
@@ -194,7 +195,7 @@ function PostEditor({ theme, toggleTheme }) {
    */
   const handleAutoSave = () => {
     const current = autoSaveDataRef.current;
-    if (!current.postData.title || !current.selectedBlog) return;
+    if (!(current.postData.title || current.postData.content) || !current.selectedBlog) return;
     
     // Salvar como rascunho local
     const key = `blogartifex_draft_${current.selectedBlog}_${current.postId || 'new'}`;
@@ -242,10 +243,11 @@ function PostEditor({ theme, toggleTheme }) {
 
         // Se não houver blog selecionado, usar o blog padrão das
         // definições (quando existir) ou o primeiro da lista
-        if (!selectedBlog && data.items.length > 0) {
+        // (update funcional: a closure deste efeito vê sempre selectedBlog vazio)
+        if (data.items.length > 0) {
           const settings = getStoredJson('blogartifex_settings', {});
           const preferred = data.items.find(blog => blog.id === settings.defaultBlogId);
-          setSelectedBlog((preferred || data.items[0]).id);
+          setSelectedBlog(prev => prev || (preferred || data.items[0]).id);
         }
       }
       // Sem blogs não há post para carregar: não deixar a página presa
@@ -257,10 +259,7 @@ function PostEditor({ theme, toggleTheme }) {
       setLoading(false);
 
       // Se for erro de autenticação, redirecionar para login
-      if (error.message.includes('autenticação') ||
-          error.message.includes('login') ||
-          error.message.includes('token')) {
-
+      if (error.code === 'AUTH') {
         AuthService.removeAuthToken();
         navigate('/', { replace: true });
         return;
@@ -288,12 +287,15 @@ function PostEditor({ theme, toggleTheme }) {
       const metaAuthor = extractMetadata(data.content, 'author');
       const metaKeywords = extractMetadata(data.content, 'keywords');
       
+      wasLiveRef.current = data.status === 'LIVE';
       setPostData({
         title: data.title || '',
         content: data.content || '',
         labels: data.labels || [],
         isDraft: data.status !== 'LIVE',
-        scheduledPublish: data.scheduled ? new Date(data.scheduled) : null
+        // A API não tem campo "scheduled": um post agendado vem com
+        // status SCHEDULED e a data futura em "published".
+        scheduledPublish: data.status === 'SCHEDULED' && data.published ? new Date(data.published) : null
       });
       
       setMetadata({
@@ -305,10 +307,7 @@ function PostEditor({ theme, toggleTheme }) {
       console.error('Erro ao buscar post:', error);
 
       // Se for erro de autenticação, redirecionar para login
-      if (error.message.includes('autenticação') ||
-          error.message.includes('login') ||
-          error.message.includes('token')) {
-
+      if (error.code === 'AUTH') {
         AuthService.removeAuthToken();
         navigate('/', { replace: true });
         return;
@@ -332,7 +331,10 @@ function PostEditor({ theme, toggleTheme }) {
     const metaRegex = new RegExp(`<meta name="${metaType}" content="([^"]*)"`, 'i');
     const match = content.match(metaRegex);
     
-    return match ? match[1] : '';
+    if (!match) return '';
+    const decoder = document.createElement('textarea');
+    decoder.innerHTML = match[1];
+    return decoder.value;
   };
 
   /**
@@ -427,16 +429,20 @@ function PostEditor({ theme, toggleTheme }) {
    * Carrega um template selecionado
    */
   const handleTemplateSelect = (e) => {
-    const templateId = parseInt(e.target.value);
+    const templateId = e.target.value;
     
-    if (templateId === 0) {
+    if (templateId === '0') {
       setSelectedTemplate(null);
       return;
     }
     
-    const template = templates.find(t => t.id === templateId);
+    // Ids importados podem ser strings: comparar como texto.
+    const template = templates.find(tpl => String(tpl.id) === templateId);
     
     if (template) {
+      if (postData.content && !window.confirm(t('editor.templates.replaceConfirm'))) {
+        return;
+      }
       setSelectedTemplate(template);
       setPostData(prev => ({
         ...prev,
@@ -454,7 +460,8 @@ function PostEditor({ theme, toggleTheme }) {
    * Insere metadata no conteúdo HTML
    */
   const insertMetadata = (content, metaType, metaValue) => {
-    const metaTag = `<meta name="${metaType}" content="${metaValue}">`;
+    const escaped = metaValue.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const metaTag = `<meta name="${metaType}" content="${escaped}">`;
     
     // Verificar se já existe a meta tag
     const metaRegex = new RegExp(`<meta name="${metaType}" content="[^"]*"`, 'i');
@@ -607,6 +614,10 @@ function PostEditor({ theme, toggleTheme }) {
       if (postId) {
         // Atualizar post existente
         savedPost = await BloggerService.updatePost(selectedBlog, postId, postPayload);
+        // Post publicado com a caixa "Rascunho" marcada: despublicar.
+        if (!publish && wasLiveRef.current && postData.isDraft) {
+          await BloggerService.revertToDraft(selectedBlog, postId);
+        }
       } else {
         // Criar novo post como rascunho
         savedPost = await BloggerService.createPost(selectedBlog, postPayload, saveOptions);
@@ -623,7 +634,7 @@ function PostEditor({ theme, toggleTheme }) {
 
       setFeedback({
         type: 'success',
-        message: postData.scheduledPublish
+        message: publish && postData.scheduledPublish
           ? t('editor.notifications.scheduled')
           : publish
             ? t('editor.notifications.published')
@@ -635,18 +646,19 @@ function PostEditor({ theme, toggleTheme }) {
       const draftKey = `blogartifex_draft_${selectedBlog}_${postId || 'new'}`;
       localStorage.removeItem(draftKey);
       
-      // Redirecionar para o dashboard após um breve atraso
+      // Redirecionar para o dashboard após um breve atraso; os botões
+      // ficam desativados até lá para um 2.º clique não duplicar o post.
       setTimeout(() => {
         navigate('/dashboard');
       }, 1500);
+      return;
     } catch (error) {
       console.error('Erro ao salvar post:', error);
       
       // Se for erro de autenticação, redirecionar para login
-      if (error.message.includes('autenticação') || 
-          error.message.includes('login') || 
-          error.message.includes('token')) {
-        
+      if (error.code === 'AUTH') {
+        // Guardar o texto localmente antes de sair, para não se perder.
+        handleAutoSave();
         AuthService.removeAuthToken();
         navigate('/', { replace: true });
         return;
@@ -656,9 +668,8 @@ function PostEditor({ theme, toggleTheme }) {
         type: 'error',
         message: t('editor.notifications.error', { message: error.message })
       });
-    } finally {
-      setSaving(false);
     }
+    setSaving(false);
   };
 
   /**
