@@ -200,7 +200,7 @@ function TemplatesManager({ theme }) {
     
     const templatesData = JSON.stringify(templates, null, 2);
     const blob = new Blob([templatesData], { type: 'application/json' });
-    saveAs(blob, `blogcraft-templates.json`);
+    saveAs(blob, `blogartifex-templates.json`);
   };
   
   /**

@@ -46,8 +46,10 @@ function PostEditor({ theme, toggleTheme }) {
     return remove;
   }, []);
   
-  // Estados do editor
-  const [loading, setLoading] = useState(false);
+  // Estados do editor. Ao abrir um post existente começa já em "loading":
+  // se o CKEditor montasse e fosse logo desmontado pelo fetchPost, a criação
+  // assíncrona que ficou a meio rebentava (editor-create-initial-data).
+  const [loading, setLoading] = useState(!!postId);
   const [saving, setSaving] = useState(false);
   const [blogs, setBlogs] = useState([]);
   const [selectedBlog, setSelectedBlog] = useState('');
@@ -111,11 +113,6 @@ function PostEditor({ theme, toggleTheme }) {
       }
     }
     
-    // Se houver um postId, carregar os dados do post existente
-    if (postId && selectedBlog) {
-      fetchPost(selectedBlog, postId);
-    }
-    
     // Configurar autosalvamento
     const settings = getStoredJson('blogartifex_settings', {});
     const autoSaveInterval = settings.autoSaveInterval || 5; // 5 minutos padrão
@@ -133,7 +130,7 @@ function PostEditor({ theme, toggleTheme }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location, postId]);
   
-  // Corrigindo o segundo useEffect (linhas ~110-113)
+  // Carregar o post existente assim que houver blog selecionado
   useEffect(() => {
     if (postId && selectedBlog) {
       fetchPost(selectedBlog, postId);
@@ -234,8 +231,9 @@ function PostEditor({ theme, toggleTheme }) {
         return;
       }
       
-      setLoading(true);
-      
+      // Sem setLoading aqui: o seletor de blogs já mostra o seu próprio
+      // estado de carregamento, e esconder a página desmontava o editor.
+
       // Buscar blogs usando o serviço
       const data = await BloggerService.getUserBlogs();
       
@@ -250,8 +248,13 @@ function PostEditor({ theme, toggleTheme }) {
           setSelectedBlog((preferred || data.items[0]).id);
         }
       }
+      // Sem blogs não há post para carregar: não deixar a página presa
+      if (!data.items || data.items.length === 0) {
+        setLoading(false);
+      }
     } catch (error) {
       console.error('Erro ao buscar blogs:', error);
+      setLoading(false);
 
       // Se for erro de autenticação, redirecionar para login
       if (error.message.includes('autenticação') ||
@@ -267,8 +270,6 @@ function PostEditor({ theme, toggleTheme }) {
         type: 'error',
         message: t('editor.errors.loadBlogs')
       });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -854,68 +855,68 @@ function PostEditor({ theme, toggleTheme }) {
             </div>
             
             <div className="post-actions">
-              <div className="labels-input">
-                <label>{t('editor.labels.tags')}</label>
-                <input
-                  type="text"
-                  value={postData.labels.join(', ')}
-                  onChange={handleLabelsChange}
-                  placeholder={t('editor.placeholders.tags')}
-                />
-              </div>
-              
-              <div className="template-select">
-                <label>{t('editor.labels.template')}</label>
-                <select onChange={handleTemplateSelect} value={selectedTemplate?.id || 0}>
-                  <option value={0}>{t('editor.templates.select')}</option>
-                  {templates.map(template => (
-                    <option key={template.id} value={template.id}>
-                      {template.name}
-                    </option>
-                  ))}
-                </select>
-                <button onClick={handleSaveTemplate}>{t('editor.buttons.saveTemplate')}</button>
-              </div>
-              
-              <div className="schedule-input">
-                <label>
+              <div className="post-fields">
+                <div className="labels-input">
+                  <label>{t('editor.labels.tags')}</label>
                   <input
-                    type="checkbox"
-                    checked={!!postData.scheduledPublish}
-                    onChange={() => handleScheduleChange(postData.scheduledPublish ? null : new Date())}
+                    type="text"
+                    value={postData.labels.join(', ')}
+                    onChange={handleLabelsChange}
+                    placeholder={t('editor.placeholders.tags')}
                   />
-                  {t('editor.labels.schedule')}
-                </label>
-                
-                {postData.scheduledPublish && (
-                  <DateTimePicker
-                    onChange={handleScheduleChange}
-                    value={postData.scheduledPublish}
-                    minDate={new Date()}
-                    format="dd/MM/yyyy HH:mm"
-                    locale={i18n.getLocale()}
-                  />
-                )}
+                </div>
+
+                <div className="template-select">
+                  <label>{t('editor.labels.template')}</label>
+                  <select onChange={handleTemplateSelect} value={selectedTemplate?.id || 0}>
+                    <option value={0}>{t('editor.templates.select')}</option>
+                    {templates.map(template => (
+                      <option key={template.id} value={template.id}>
+                        {template.name}
+                      </option>
+                    ))}
+                  </select>
+                  <button onClick={handleSaveTemplate}>{t('editor.buttons.saveTemplate')}</button>
+                </div>
               </div>
-              
-              <div className="draft-toggle">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={postData.isDraft}
-                    onChange={handleDraftToggle}
-                  />
-                  {t('editor.labels.draft')}
-                </label>
-              </div>
-              
-              <div className="metadata-toggle">
+
+              <div className="post-toolbar">
+                <div className="schedule-input">
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={!!postData.scheduledPublish}
+                      onChange={() => handleScheduleChange(postData.scheduledPublish ? null : new Date())}
+                    />
+                    {t('editor.labels.schedule')}
+                  </label>
+
+                  {postData.scheduledPublish && (
+                    <DateTimePicker
+                      onChange={handleScheduleChange}
+                      value={postData.scheduledPublish}
+                      minDate={new Date()}
+                      format="dd/MM/yyyy HH:mm"
+                      locale={i18n.getLocale()}
+                    />
+                  )}
+                </div>
+
+                <div className="draft-toggle">
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={postData.isDraft}
+                      onChange={handleDraftToggle}
+                    />
+                    {t('editor.labels.draft')}
+                  </label>
+                </div>
+
+                <div className="post-toolbar-buttons">
                   <button onClick={() => setShowMetadataEditor(!showMetadataEditor)}>
                     {showMetadataEditor ? t('editor.buttons.hideMetadata') : t('editor.buttons.showMetadata')}
                   </button>
-              </div>
-              
-              <div className="import-export">
                   <button onClick={handleExportWord}>{t('editor.buttons.exportWord')}</button>
                   <label className="file-input-label">
                     {t('editor.buttons.importFile')}
@@ -928,6 +929,7 @@ function PostEditor({ theme, toggleTheme }) {
                   </label>
                 </div>
               </div>
+            </div>
             
             {showMetadataEditor && (
                 <div className="metadata-editor">

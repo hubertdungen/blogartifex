@@ -130,12 +130,14 @@
   
   .dashboard-stats {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    /* Três contadores (publicados, rascunhos, agendados) + o gráfico */
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 16px;
     margin-bottom: 34px;
   }
   
   .stat-card {
+    min-width: 0;
     padding: 18px;
     border-radius: 8px;
     border: 1px solid;
@@ -170,8 +172,9 @@
     color: var(--primary-color);
   }
   
+  /* O gráfico ocupa sempre a linha inteira, por baixo dos contadores */
   .stat-chart {
-    grid-column: span 3;
+    grid-column: 1 / -1;
   }
   
   .month-chart {
@@ -537,16 +540,6 @@
   }
   
   /* Responsividade */
-  @media (max-width: 1024px) {
-    .dashboard-stats {
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    }
-    
-    .stat-chart {
-      grid-column: span 2;
-    }
-  }
-  
   @media (max-width: 768px) {
     .dashboard-header {
       flex-direction: column;
@@ -567,14 +560,6 @@
       flex-direction: column;
       align-items: flex-start;
       gap: 15px;
-    }
-    
-    .dashboard-stats {
-      grid-template-columns: 1fr 1fr;
-    }
-    
-    .stat-chart {
-      grid-column: span 2;
     }
     
     .month-chart {
@@ -602,11 +587,7 @@
   
   @media (max-width: 480px) {
     .dashboard-stats {
-      grid-template-columns: 1fr;
-    }
-    
-    .stat-chart {
-      grid-column: span 1;
+      grid-template-columns: minmax(0, 1fr);
     }
     
     .post-meta {
