@@ -127,7 +127,6 @@ the user's normal two-factor authentication if their account has it enabled.
    - Copy `.env.example` to `.env` only if you want to override defaults.
    - `REACT_APP_GOOGLE_CLIENT_ID` is optional for normal local use because
      BlogArtifex includes a default OAuth client ID.
-   - `REACT_APP_TINYMCE_API_KEY` is also optional.
 
 4. Run the application
    ```bash

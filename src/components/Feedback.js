@@ -1,4 +1,5 @@
 import React from 'react';
+import { t } from '../services/I18nService';
 
 /**
  * Componente de Feedback
@@ -35,7 +36,7 @@ function Feedback({ type, message, onDismiss }) {
       {type === 'loading' && <div className="feedback-spinner"></div>}
       
       <div className="feedback-message">
-        {message || (type === 'loading' ? 'Carregando...' : 'Ocorreu um erro.')}
+        {message || (type === 'loading' ? t('common.loading') : t('common.unexpectedError'))}
       </div>
       
       {type !== 'loading' && onDismiss && (

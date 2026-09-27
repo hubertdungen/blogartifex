@@ -71,7 +71,6 @@ ativa.
      predefinidos.
    - `REACT_APP_GOOGLE_CLIENT_ID` é opcional para uso local normal, porque o
      BlogArtifex inclui um ID de cliente OAuth predefinido.
-   - `REACT_APP_TINYMCE_API_KEY` também é opcional.
 
 4. Executar a aplicação
    ```bash

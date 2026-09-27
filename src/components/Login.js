@@ -56,7 +56,7 @@ function Login() {
     },
     onError: (err) => {
       console.error('Google OAuth error:', err);
-      setError(t('auth.loginError', { message: err.error || 'Please check your connection and try again.' }));
+      setError(t('auth.loginError', { message: err.error || t('auth.checkConnection') }));
       setIsLoading(false);
     },
     scope: AuthService.BLOGGER_API_SCOPE,

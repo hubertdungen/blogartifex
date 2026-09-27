@@ -6,6 +6,9 @@ import AuthService from '../services/AuthService';
 import Feedback from './Feedback';
 import i18n, { t } from '../services/I18nService';
 
+// Upper bound on 500-post pages fetched per status for the dashboard counters
+const MAX_STAT_PAGES = 20;
+
 /**
  * Dashboard Component - Main application interface after login
  * 
@@ -50,7 +53,7 @@ function Dashboard() {
   // Load posts when selected blog changes
   useEffect(() => {
     if (selectedBlog) {
-      fetchBlogPosts(selectedBlog.id);
+      fetchBlogPosts(selectedBlog.id, selectedBlog.posts?.totalItems);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedBlog]);
@@ -123,7 +126,7 @@ function Dashboard() {
       // Show general error message
       setFeedback({
         type: 'error',
-        message: `Erro ao carregar blogs: ${error.message}`
+        message: t('dashboard.messages.loadBlogsError', { error: error.message })
       });
     } finally {
       setLoading(false);
@@ -133,10 +136,7 @@ function Dashboard() {
   /**
    * Calculate statistics from posts data
    */
-  const calculateStats = useCallback((published, drafts, scheduled) => {
-    const totalPosts = published.length;
-    const draftPosts = drafts.length;
-    const scheduledPosts = scheduled.length;
+  const calculateStats = useCallback(({ totalPosts, draftPosts, scheduledPosts, publishedDates }) => {
     const now = new Date();
     const last6Months = [];
 
@@ -150,10 +150,10 @@ function Dashboard() {
       });
     }
 
-    for (const post of published) {
-      if (!post.published) continue;
+    for (const published of publishedDates) {
+      if (!published) continue;
 
-      const publishedDate = new Date(post.published);
+      const publishedDate = new Date(published);
       const monthIndex = last6Months.findIndex(month =>
         month.month === publishedDate.getMonth() &&
         month.year === publishedDate.getFullYear()
@@ -173,9 +173,37 @@ function Dashboard() {
   }, []);
 
   /**
+   * Collects the publish dates of every post with the given status, paging
+   * through the API with a minimal field mask. The post list only loads the
+   * 10 most recent per status, so the counters and the monthly chart need
+   * their own (cheap) requests to reflect the whole blog.
+   */
+  const collectPostDates = useCallback(async (blogId, status, params = {}) => {
+    const dates = [];
+    let pageToken;
+
+    for (let page = 0; page < MAX_STAT_PAGES; page++) {
+      const data = await BloggerService.getPosts(blogId, {
+        status,
+        maxResults: 500,
+        fetchBodies: false,
+        fields: 'nextPageToken,items(published)',
+        ...params,
+        ...(pageToken ? { pageToken } : {})
+      });
+
+      (data.items || []).forEach(post => dates.push(post.published));
+      pageToken = data.nextPageToken;
+      if (!pageToken) break;
+    }
+
+    return dates;
+  }, []);
+
+  /**
    * Fetch posts for the selected blog
    */
-  const fetchBlogPosts = useCallback(async (blogId) => {
+  const fetchBlogPosts = useCallback(async (blogId, publishedTotal) => {
     try {
       setLoadingStats(true);
       
@@ -218,12 +246,28 @@ function Dashboard() {
       
       setPosts(allPosts);
       
-      // Calculate statistics
-      calculateStats(
-        publishedData.items || [],
-        draftData.items || [],
-        scheduledData.items || []
-      );
+      // Counters and chart cover the whole blog, not just the 10 most
+      // recent posts per status shown in the list.
+      const chartStart = new Date();
+      chartStart.setMonth(chartStart.getMonth() - 5, 1);
+      chartStart.setHours(0, 0, 0, 0);
+
+      const [draftDates, scheduledDates, recentPublishedDates] = await Promise.all([
+        collectPostDates(blogId, 'draft'),
+        collectPostDates(blogId, 'scheduled'),
+        collectPostDates(blogId, 'live', { startDate: chartStart.toISOString() })
+      ]);
+
+      const blogTotal = Number(publishedTotal);
+
+      calculateStats({
+        totalPosts: publishedTotal != null && Number.isFinite(blogTotal)
+          ? blogTotal
+          : (publishedData.items || []).length,
+        draftPosts: draftDates.length,
+        scheduledPosts: scheduledDates.length,
+        publishedDates: recentPublishedDates
+      });
     } catch (error) {
       console.error('Error fetching posts:', error);
       
@@ -246,12 +290,12 @@ function Dashboard() {
       // Show error message
       setFeedback({
         type: 'error',
-        message: `Erro ao carregar posts: ${error.message}`
+        message: t('dashboard.messages.loadPostsError', { error: error.message })
       });
     } finally {
       setLoadingStats(false);
     }
-  }, [calculateStats, navigate]);
+  }, [calculateStats, collectPostDates, navigate]);
 
   /**
    * Navigate to create new post
@@ -283,7 +327,7 @@ function Dashboard() {
     try {
       setFeedback({
         type: 'loading',
-        message: 'Carregando post para duplicação...'
+        message: t('dashboard.messages.duplicating')
       });
       
       // Fetch the post to duplicate
@@ -319,7 +363,7 @@ function Dashboard() {
       // Show error message
       setFeedback({
         type: 'error',
-        message: `Erro ao duplicar post: ${error.message}`
+        message: t('dashboard.messages.duplicateError', { error: error.message })
       });
     }
   }, [navigate, selectedBlog]);
@@ -338,7 +382,7 @@ function Dashboard() {
     try {
       setFeedback({
         type: 'loading',
-        message: 'Excluindo post...'
+        message: t('dashboard.messages.deleting')
       });
       
       // Delete the post
@@ -350,7 +394,7 @@ function Dashboard() {
       // Show success message
       setFeedback({
         type: 'success',
-        message: 'Post excluído com sucesso!',
+        message: t('dashboard.messages.deleted'),
         duration: 3000
       });
     } catch (error) {
@@ -374,7 +418,7 @@ function Dashboard() {
       // Show error message
       setFeedback({
         type: 'error',
-        message: `Erro ao excluir post: ${error.message}`
+        message: t('dashboard.messages.deleteError', { error: error.message })
       });
     }
   }, [navigate, selectedBlog]);
@@ -466,19 +510,19 @@ function Dashboard() {
     switch (status) {
       case 'LIVE':
         badgeClass = 'status-badge status-live';
-        text = 'Publicado';
+        text = t('dashboard.posts.status.published');
         break;
       case 'DRAFT':
         badgeClass = 'status-badge status-draft';
-        text = 'Rascunho';
+        text = t('dashboard.posts.status.draft');
         break;
       case 'SCHEDULED':
         badgeClass = 'status-badge status-scheduled';
-        text = 'Agendado';
+        text = t('dashboard.posts.status.scheduled');
         break;
       default:
         badgeClass = 'status-badge';
-        text = status || 'Desconhecido';
+        text = status || '?';
     }
     
     return <span className={badgeClass}>{text}</span>;
@@ -682,7 +726,9 @@ function Dashboard() {
                             className="post-thumbnail"
                           />
                         ) : (
-                          <div className="post-thumbnail no-image" />
+                          <div className="post-thumbnail no-image" aria-hidden="true">
+                            {(post.title || '?').trim().charAt(0).toUpperCase()}
+                          </div>
                         )}
 
                         <div className="post-info">

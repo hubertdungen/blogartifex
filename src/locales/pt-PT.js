@@ -15,6 +15,7 @@ const translations = {
       loggingIn: 'A iniciar sessão...',
       confirmLogout: 'Tem a certeza que deseja terminar a sessão? Os seus dados locais serão mantidos.',
       loginError: 'Falha na autenticação: {message}',
+      checkConnection: 'Verifique a sua ligação e tente novamente.',
       chooseBloggerAccount: 'Escolha a conta Google que tem acesso aos seus blogues do Blogger.'
     },
     
@@ -54,6 +55,15 @@ const translations = {
         drafts: 'Rascunhos',
         scheduled: 'Agendados',
         postsByMonth: 'Publicações por Mês'
+      },
+      messages: {
+        loadBlogsError: 'Erro ao carregar os blogs: {error}',
+        loadPostsError: 'Erro ao carregar os artigos: {error}',
+        duplicating: 'A carregar o artigo para duplicar...',
+        duplicateError: 'Erro ao duplicar o artigo: {error}',
+        deleting: 'A eliminar o artigo...',
+        deleted: 'Artigo eliminado.',
+        deleteError: 'Erro ao eliminar o artigo: {error}'
       },
       posts: {
         recentPosts: 'Artigos Recentes',
@@ -151,8 +161,8 @@ const translations = {
       errors: {
         selectBlog: 'Por favor, selecione um blogue antes de guardar o artigo.',
         enterTitle: 'Por favor, insira um título para o artigo.',
-        loadBlogs: 'Não foi possível carregar os seus blogues. Por favor, verifique a sua conexão e tente novamente.',
-        loadPost: 'Não foi possível carregar o artigo. Por favor, verifique a sua conexão e tente novamente.',
+        loadBlogs: 'Não foi possível carregar os seus blogues. Por favor, verifique a sua ligação e tente novamente.',
+        loadPost: 'Não foi possível carregar o artigo. Por favor, verifique a sua ligação e tente novamente.',
         importBinary: 'Este ficheiro Word está num formato binário que não pode ser importado diretamente. No Word, guarde o documento como "Página Web (.html)" ou texto simples e importe esse ficheiro.'
       },
       draft: {
@@ -302,10 +312,10 @@ const translations = {
         importSuccess: 'Importação concluída! {count} modelos importados.',
         importError: 'Erro ao importar modelos: {message}',
         replaceOrMerge: 'Importar {count} modelos. Deseja substituir todos os modelos existentes?',
-        replaceConfirm: 'OK para substituir ou Cancelar para mesclar com os modelos existentes.',
+        replaceConfirm: 'OK para substituir ou Cancelar para juntar aos modelos existentes.',
         conflictDetected: '{count} modelos têm IDs conflitantes.',
-        conflictAction: 'Deseja sobrescrever os modelos existentes com o mesmo ID?',
-        conflictConfirm: 'OK para sobrescrever ou Cancelar para manter os modelos existentes.',
+        conflictAction: 'Deseja substituir os modelos existentes com o mesmo ID?',
+        conflictConfirm: 'OK para substituir ou Cancelar para manter os modelos existentes.',
         noValidTemplates: 'Nenhum modelo válido encontrado no ficheiro.',
         invalidJson: 'Ficheiro JSON inválido.'
       }
@@ -315,10 +325,10 @@ const translations = {
       title: 'Definições',
       sections: {
         general: 'Preferências Gerais',
-        autoSave: 'Guardamento Automático',
+        autoSave: 'Gravação Automática',
         security: 'Segurança',
           appearance: 'Aparência',
-          api: 'Configurações de API',
+          api: 'Definições da API',
           dataManagement: 'Gestão de Dados',
           debug: 'Depuração'
         },
@@ -329,8 +339,8 @@ const translations = {
         defaultTemplateDesc: 'Modelo carregado automaticamente ao criar um novo artigo.',
         publishStatus: 'Estado de Publicação Predefinido:',
         publishStatusDesc: 'Estado predefinido ao guardar artigos.',
-        autoSaveInterval: 'Intervalo de Guardamento Automático (minutos):',
-        autoSaveIntervalDesc: 'Intervalo de tempo para guardamento automático de rascunhos.',
+        autoSaveInterval: 'Intervalo de Gravação Automática (minutos):',
+        autoSaveIntervalDesc: 'Intervalo de tempo para gravação automática de rascunhos.',
         autoBackup: 'Cópia de Segurança Automática de Rascunhos',
         autoBackupDesc: 'Cria cópias locais de segurança dos seus rascunhos.',
         confirmDelete: 'Confirmar antes de eliminar',
@@ -365,10 +375,10 @@ const translations = {
         saveSuccess: 'Definições guardadas com sucesso!',
         resetConfirm: 'Tem a certeza que deseja restaurar as definições predefinidas? Esta ação não pode ser desfeita.',
         clearDataConfirm: 'ATENÇÃO: Isto apagará todos os seus dados locais, incluindo modelos e definições. Esta ação não pode ser desfeita. Deseja continuar?',
-        apiChanged: 'As configurações de API foram alteradas. A aplicação precisa de ser reiniciada para aplicar as alterações. Deseja reiniciar agora?'
+        apiChanged: 'As definições da API foram alteradas. A aplicação precisa de ser reiniciada para aplicar as alterações. Deseja reiniciar agora?'
       },
       apiInfo: {
-        title: 'Sobre as Configurações de API',
+        title: 'Sobre as Definições da API',
         steps: [
           'Criar um projeto na Google Cloud Console',
           'Habilitar a API do Blogger',
@@ -376,11 +386,12 @@ const translations = {
           'Adicionar {origin} como origem JavaScript autorizada',
           'Adicionar {origin} como URI de redirecionamento'
         ],
-        important: 'Importante: Alterações nesta configuração exigirão que inicie sessão novamente.'
+        important: 'Importante: Alterações nesta definição exigirão que inicie sessão novamente.'
       }
     },
     
     common: {
+      unexpectedError: 'Ocorreu um erro.',
       loading: 'A carregar...',
       error: 'Erro: {message}',
       success: 'Sucesso!',
