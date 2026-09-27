@@ -25,6 +25,8 @@ function Sidebar({ theme, toggleTheme }) {
    * Verifica se o link está ativo
    */
   const isActive = (path) => {
+    // "New Post" só fica ativo no editor vazio, não ao editar um post existente
+    if (path === '/editor') return location.pathname === '/editor';
     return location.pathname.startsWith(path);
   };
   

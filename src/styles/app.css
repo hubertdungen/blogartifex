@@ -988,3 +988,82 @@ body.dark .tox-statusbar {
   background-color: var(--danger-color);
   color: white;
 }
+
+/* Layout mobile: a sidebar passa a barra de topo compacta (logo + tema +
+   sair na primeira linha, navegação deslizante na segunda). Fica no fim do
+   ficheiro para ganhar às regras base de .logout/.theme-switch. */
+@media (max-width: 768px) {
+  .dashboard-container {
+    flex-direction: column;
+    align-items: stretch;
+    padding-left: 0;
+  }
+
+  .sidebar {
+    position: sticky;
+    top: 0;
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 10px;
+    padding: 10px 14px 0;
+  }
+
+  .logo {
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+    margin: 0;
+    border-bottom: none;
+  }
+
+  .logo h2 {
+    font-size: 1.15rem;
+  }
+
+  .logo-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .theme-switch,
+  .logout {
+    padding: 0;
+    margin: 0;
+    border: none;
+  }
+
+  .theme-switch button,
+  .logout button {
+    width: auto;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+  }
+
+  .nav-menu {
+    order: 3;
+    flex: 0 0 100%;
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 0;
+    scrollbar-width: none;
+  }
+
+  .nav-item {
+    white-space: nowrap;
+    margin: 0;
+    padding: 10px 9px;
+    font-size: 0.95rem;
+    border-radius: 0;
+  }
+
+  .main-content,
+  .editor-content,
+  .templates-content,
+  .settings-content {
+    min-height: 0;
+    padding: 20px 16px;
+  }
+}
