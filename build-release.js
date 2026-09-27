@@ -177,9 +177,7 @@ function ensureDependencies() {
 function ensureProductionBuild(skipBuild) {
   if (!skipBuild) {
     console.log('Building production assets...');
-    run('npm', ['run', 'build'], {
-      env: { ...process.env, NODE_OPTIONS: '--openssl-legacy-provider' }
-    });
+    run('npm', ['run', 'build']);
   }
 
   const indexFile = path.join(root, 'build', 'index.html');

@@ -215,7 +215,7 @@ uma release pública, correr um fork ou substituir o ID de cliente OAuth incluí
 - Verificar conectividade de rede
 - Garantir que o navegador suporta fluxos OAuth modernos
 - Se receber 401/403, termine sessão e inicie sessão novamente
-- O projeto usa `react-scripts` com `--openssl-legacy-provider` nos scripts `npm` para compatibilidade no Node 18
+- Build: `react-scripts` 5 (webpack 5); Node 18 ou mais recente, sem opções extra
 
 ## 🧪 Build & Testes
 

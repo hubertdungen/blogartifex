@@ -210,7 +210,7 @@ release, running a fork, or replacing the bundled OAuth client ID.
 - Check network connectivity
 - Ensure browser supports modern OAuth flows
 - If you receive 401/403 errors, log out and sign in again
-- The project uses `react-scripts` with `--openssl-legacy-provider` set in `npm` scripts for compatibility on Node 18
+- Build tooling: `react-scripts` 5 (webpack 5); Node 18 or newer, no extra flags needed
 
 ## 🧪 Build & Test
 

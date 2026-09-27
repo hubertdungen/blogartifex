@@ -138,7 +138,7 @@ function App() {
   }, [theme]);
 
   return (
-    <HashRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+    <HashRouter>
       <div className={`app-container ${theme}`}>
 
           {/* Add the debugger here, before Routes */}
