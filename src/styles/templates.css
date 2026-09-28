@@ -70,7 +70,8 @@
   
   .templates-layout {
     display: grid;
-    grid-template-columns: minmax(300px, 1fr) 2fr;
+    /* minmax(0, …): otherwise the editor toolbar's min width blows the grid out */
+    grid-template-columns: minmax(260px, 1fr) minmax(0, 2fr);
     gap: 28px;
   }
   
@@ -470,7 +471,7 @@
   /* Responsividade */
   @media (max-width: 1200px) {
     .templates-layout {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
     }
     
     .templates-list {
@@ -516,3 +517,7 @@
       flex: 1;
     }
   }
+
+.template-editor-content .ck-editor__editable_inline {
+  min-height: 400px;
+}

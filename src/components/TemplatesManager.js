@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CKEditor } from '@ckeditor/ckeditor5-react';
-import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+import { ClassicEditor, buildEditorConfig } from '../utils/editorConfig';
 import { saveAs } from 'file-saver';
 import Feedback from './Feedback';
 import i18n, { t } from '../services/I18nService';
@@ -25,6 +25,8 @@ function TemplatesManager({ theme }) {
   const [isEditing, setIsEditing] = useState(false);
   const [feedback, setFeedback] = useState(null);
   const editorRef = useRef(null);
+  const locale = i18n.getLocale();
+  const editorConfig = useMemo(() => buildEditorConfig({ locale, compact: true }), [locale]);
   const [, setLocale] = useState(i18n.getLocale());
 
   useEffect(() => {
@@ -411,6 +413,8 @@ function TemplatesManager({ theme }) {
           type={feedback.type} 
           message={feedback.message} 
           onDismiss={() => setFeedback(null)}
+          duration={feedback.duration}
+          floating
         />
       )}
       
@@ -523,29 +527,11 @@ function TemplatesManager({ theme }) {
                   onReady={editor => {
                     // Armazenar referência ao editor
                     editorRef.current = editor;
-                    
-                    // Configurações adicionais
-                    editor.ui.view.editable.element.style.minHeight = '400px';
                   }}
                   onChange={(event, editor) => {
                     // Nada a fazer aqui, salvamos apenas quando o usuário clica em salvar
                   }}
-                  config={{
-                    toolbar: [
-                      'heading',
-                      '|',
-                      'bold', 'italic',
-                      '|',
-                      'link', 'bulletedList', 'numberedList',
-                      '|',
-                      'indent', 'outdent',
-                      '|',
-                      'blockQuote', 'insertTable',
-                      '|',
-                      'undo', 'redo'
-                    ],
-                    language: i18n.getLocale().split('-')[0]
-                  }}
+                  config={editorConfig}
                 />
               </div>
             </div>

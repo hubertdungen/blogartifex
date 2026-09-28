@@ -111,6 +111,7 @@ const translations = {
     editor: {
       title: 'Editor de Artigo',
       placeholders: {
+        content: 'Escreva aqui, ou cole diretamente do Word…',
         title: 'Título do artigo',
         tags: 'Exemplo: tecnologia, tutorial, dicas'
       },
@@ -166,17 +167,26 @@ const translations = {
         enterTitle: 'Por favor, insira um título para o artigo.',
         loadBlogs: 'Não foi possível carregar os seus blogues. Por favor, verifique a sua ligação e tente novamente.',
         loadPost: 'Não foi possível carregar o artigo. Por favor, verifique a sua ligação e tente novamente.',
-        importBinary: 'Este ficheiro Word está num formato binário que não pode ser importado diretamente. No Word, guarde o documento como "Página Web (.html)" ou texto simples e importe esse ficheiro.'
+        importBinary: 'Este ficheiro está num formato binário (.doc antigo). No Word, guarde-o como .docx e importe esse ficheiro — ou copie o texto e cole-o no editor.'
       },
       draft: {
         restoreConfirm: 'Foi encontrado um rascunho guardado automaticamente em {time}. Deseja restaurá-lo?'
       },
-      imageFormat: {
-        title: 'Propriedades da Imagem',
-        standard: 'Tamanho Padrão',
-        fit: 'Ajustar Dentro (Conter)',
-        fill: 'Preencher Área (Cobrir)',
-        stretch: 'Esticar'
+      link: {
+        openInNewTab: 'Abrir num novo separador'
+      },
+      image: {
+        wrapText: 'Moldar texto',
+        breakText: 'Quebrar texto',
+        original: 'Tamanho original'
+      },
+      codeBlock: {
+        plain: 'Texto simples'
+      },
+      import: {
+        docxDone: 'Documento Word importado. Dica: copiar e colar a partir do Word também mantém tipos de letra, cores e alinhamento.',
+        localImages: "Não foi possível colar {count} imagem(ns) do Word (o Word para Mac, o Word Online e o Outlook não as partilham). Insira-as com o botão de imagem.",
+        failed: 'Não foi possível importar o ficheiro: {message}'
       },
       stats: {
         words: '{count} palavras',

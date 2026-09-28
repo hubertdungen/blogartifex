@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { t } from '../services/I18nService';
 
 /**
@@ -6,8 +6,19 @@ import { t } from '../services/I18nService';
  * 
  * Exibe mensagens de carregamento, erro ou sucesso de forma consistente
  */
-function Feedback({ type, message, onDismiss }) {
-  let className = 'feedback';
+function Feedback({ type, message, onDismiss, duration, floating = false }) {
+  // Messages with a duration close themselves (e.g. "saved" confirmations).
+  // onDismiss is usually a new arrow on every render, so read it from a ref
+  // instead of restarting the timer on each keystroke.
+  const dismissRef = useRef(onDismiss);
+  dismissRef.current = onDismiss;
+  useEffect(() => {
+    if (!duration) return undefined;
+    const timer = setTimeout(() => dismissRef.current && dismissRef.current(), duration);
+    return () => clearTimeout(timer);
+  }, [duration, message]);
+
+  let className = floating ? 'feedback feedback-fixed' : 'feedback';
   
   // Definir classe CSS com base no tipo
   switch (type) {
@@ -19,6 +30,9 @@ function Feedback({ type, message, onDismiss }) {
       break;
     case 'success':
       className += ' feedback-success';
+      break;
+    case 'warning':
+      className += ' feedback-warning';
       break;
     default:
       className += ' feedback-info';

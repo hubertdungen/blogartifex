@@ -111,6 +111,7 @@ const translations = {
     editor: {
       title: 'Post Editor',
       placeholders: {
+        content: 'Write here, or paste straight from Word…',
         title: 'Post title',
         tags: 'Example: technology, tutorial, tips'
       },
@@ -166,17 +167,26 @@ const translations = {
         enterTitle: 'Please enter a title for the post.',
         loadBlogs: 'Unable to load your blogs. Please check your connection and try again.',
         loadPost: 'Unable to load the post. Please check your connection and try again.',
-        importBinary: 'This Word file is in a binary format that cannot be imported directly. In Word, save the document as "Web Page (.html)" or plain text and import that file.'
+        importBinary: 'This file is in a binary format (old .doc). In Word, save it as .docx and import that file — or copy the text and paste it into the editor.'
       },
       draft: {
         restoreConfirm: 'An auto-saved draft from {time} was found. Do you want to restore it?'
       },
-      imageFormat: {
-        title: 'Image Properties',
-        standard: 'Standard Size',
-        fit: 'Inside Fit (Contain)',
-        fill: 'Fill Area (Cover)',
-        stretch: 'Stretch'
+      link: {
+        openInNewTab: 'Open in a new tab'
+      },
+      image: {
+        wrapText: 'Wrap text',
+        breakText: 'Break text',
+        original: 'Original size'
+      },
+      codeBlock: {
+        plain: 'Plain text'
+      },
+      import: {
+        docxDone: 'Word document imported. Tip: copying and pasting from Word also keeps fonts, colours and alignment.',
+        localImages: "{count} image(s) from Word could not be pasted (Word for Mac, Word Online and Outlook don't share them). Insert them with the image button.",
+        failed: 'Could not import the file: {message}'
       },
       stats: {
         words: '{count} words',

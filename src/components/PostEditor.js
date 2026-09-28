@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { CKEditor } from '@ckeditor/ckeditor5-react';
-import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 import DateTimePicker from 'react-datetime-picker';
 import 'react-datetime-picker/dist/DateTimePicker.css';
 import 'react-calendar/dist/Calendar.css';
@@ -12,16 +11,10 @@ import AuthService from '../services/AuthService';
 import Feedback from './Feedback';
 import AIAssistant from './AIAssistant';
 import AISelectionMenu from './AISelectionMenu';
-import ImageFormatter from './ImageFormatter';
 import i18n, { t } from '../services/I18nService';
 import { getStoredJson, getStoredValue, setStoredValue } from '../utils/storage';
-import {
-  Base64UploadAdapterPlugin,
-  ImageSizeAttributesPlugin,
-  EDITOR_TOOLBAR,
-  EDITOR_IMAGE_CONFIG,
-  EDITOR_TABLE_CONFIG
-} from '../utils/ckeditorExtensions';
+import { ClassicEditor, buildEditorConfig } from '../utils/editorConfig';
+import { toBloggerHtml, fromBloggerHtml } from '../utils/bloggerHtml';
 
 /**
  * Componente do Editor de Posts
@@ -75,6 +68,20 @@ function PostEditor({ theme, toggleTheme }) {
   
   // Estado para mensagens de feedback
   const [feedback, setFeedback] = useState(null);
+  const locale = i18n.getLocale();
+  // The editor reads its config once, at creation
+  const editorConfig = useMemo(
+    () => buildEditorConfig({
+      locale,
+      placeholder: t('editor.placeholders.content'),
+      onLocalImagesDropped: count => setFeedback({
+        type: 'warning',
+        message: t('editor.import.localImages', { count }),
+        duration: 8000
+      })
+    }),
+    [locale]
+  );
   const autoSaveDataRef = useRef({ postData, metadata, selectedBlog, postId });
 
   // Assistente de IA
@@ -290,7 +297,7 @@ function PostEditor({ theme, toggleTheme }) {
       wasLiveRef.current = data.status === 'LIVE';
       setPostData({
         title: data.title || '',
-        content: data.content || '',
+        content: fromBloggerHtml(data.content || ''),
         labels: data.labels || [],
         isDraft: data.status !== 'LIVE',
         // A API não tem campo "scheduled": um post agendado vem com
@@ -585,7 +592,8 @@ function PostEditor({ theme, toggleTheme }) {
       setSaving(true);
       
       // Adicionar metadados ao conteúdo
-      let finalContent = postData.content;
+      // Inline the layout styles Blogger themes don't have
+      let finalContent = toBloggerHtml(postData.content);
       
       if (metadata.description) {
         finalContent = insertMetadata(finalContent, 'description', metadata.description);
@@ -690,93 +698,101 @@ function PostEditor({ theme, toggleTheme }) {
    * Exportar para Word
    */
   const handleExportWord = () => {
-    // Criar um arquivo HTML que seja compatível com Word
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <title>${postData.title}</title>
-      </head>
-      <body>
-        <h1>${postData.title}</h1>
-        ${postData.content}
-      </body>
-      </html>
-    `;
-    
-    const blob = new Blob([htmlContent], { type: 'application/msword' });
+    // HTML with Word's namespaces opens in Word's Print Layout, with the
+    // same inline layout styles that go to Blogger.
+    const title = (postData.title || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const htmlContent = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="UTF-8">
+<title>${title}</title>
+<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->
+<style>body{font-family:Calibri,Arial,sans-serif;font-size:11pt;line-height:1.5}img{max-width:100%}</style>
+</head>
+<body>
+<h1>${title}</h1>
+${toBloggerHtml(postData.content)}
+</body>
+</html>`;
+
+    const blob = new Blob(['\ufeff', htmlContent], { type: 'application/msword' });
     saveAs(blob, `${postData.title || 'post'}.doc`);
   };
 
   /**
    * Importar arquivo (TXT, DOC, DOCX, HTML)
    */
-  const handleFileImport = (e) => {
-    const file = e.target.files[0];
-    
-    if (!file) return;
-    
-    const reader = new FileReader();
-    
-    reader.onload = (event) => {
-      const fileContent = event.target.result;
+  const applyImportedContent = (title, content) => {
+    setPostData(prev => ({
+      ...prev,
+      title: title || prev.title,
+      content: content || prev.content
+    }));
 
-      // Ficheiros .docx (e .doc modernos) são contentores ZIP binários
-      // que não podem ser interpretados como HTML no navegador.
-      if (typeof fileContent === 'string' && fileContent.startsWith('PK')) {
-        setFeedback({
-          type: 'error',
-          message: t('editor.errors.importBinary')
-        });
-        e.target.value = '';
+    if (editorRef.current && content) {
+      editorRef.current.setData(content);
+    }
+  };
+
+  const handleFileImport = async (e) => {
+    const input = e.target;
+    const file = input.files[0];
+    if (!file) return;
+
+    try {
+      if (/\.docx$/i.test(file.name)) {
+        // .docx → HTML in the browser (mammoth, BSD, loaded on demand):
+        // headings, lists, tables, links, bold/italic and embedded images.
+        const { default: mammoth } = await import('mammoth');
+        const result = await mammoth.convertToHtml(
+          { arrayBuffer: await file.arrayBuffer() },
+          { styleMap: ["p[style-name='Title'] => h1.ba-doc-title:fresh"] }
+        );
+
+        const doc = new DOMParser().parseFromString(result.value, 'text/html');
+        // The document title (Word "Title" style, or a leading Heading 1)
+        // becomes the post title instead of repeating it in the body.
+        const titleElement = doc.querySelector('h1.ba-doc-title')
+          || (doc.body.firstElementChild?.tagName === 'H1' ? doc.body.firstElementChild : null);
+        const title = titleElement ? titleElement.textContent.trim() : '';
+        if (titleElement) titleElement.remove();
+
+        applyImportedContent(title, doc.body.innerHTML);
+        setFeedback({ type: 'success', message: t('editor.import.docxDone'), duration: 4000 });
         return;
       }
 
-      // Tentar extrair título e conteúdo
-      let title = '';
-      let content = '';
+      const fileContent = await file.text();
 
-      if (file.name.endsWith('.txt')) {
-        // Arquivo TXT - primeira linha como título, resto como conteúdo
+      // Binary files (old .doc, a renamed .docx) — text and HTML never contain NUL
+      if (fileContent.startsWith('PK') || fileContent.includes('\u0000')) {
+        setFeedback({ type: 'error', message: t('editor.errors.importBinary') });
+        return;
+      }
+
+      if (/\.txt$/i.test(file.name)) {
+        // TXT: first line is the title, the rest one paragraph per line
+        const escape = text => text.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
         const lines = fileContent.split('\n');
-        title = lines[0] || '';
-        content = lines.slice(1)
-          .map(line => (line.trim() ? `<p>${line}</p>` : ''))
-          .join('');
-      } else {
-        // Arquivo Word/HTML - tentar extrair conteúdo
-        try {
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(fileContent, 'text/html');
-
-          // Tentar obter o título
-          const titleElement = doc.querySelector('title') || doc.querySelector('h1');
-          title = titleElement ? titleElement.textContent : '';
-
-          // Obter o conteúdo do body
-          const bodyElement = doc.querySelector('body');
-          content = bodyElement ? bodyElement.innerHTML : fileContent;
-        } catch (error) {
-          console.error('Erro ao processar arquivo:', error);
-          content = fileContent;
-        }
+        applyImportedContent(
+          lines[0] || '',
+          lines.slice(1).map(line => (line.trim() ? `<p>${escape(line)}</p>` : '')).join('')
+        );
+        return;
       }
 
-      setPostData(prev => ({
-        ...prev,
-        title: title || prev.title,
-        content: content || prev.content
-      }));
-
-      // Atualizar o editor com o novo conteúdo
-      if (editorRef.current && content) {
-        editorRef.current.setData(content);
-      }
-      e.target.value = '';
-    };
-
-    reader.readAsText(file);
+      // HTML (including Word's "Web Page" export)
+      const doc = new DOMParser().parseFromString(fileContent, 'text/html');
+      const titleElement = doc.querySelector('title') || doc.querySelector('h1');
+      applyImportedContent(
+        titleElement ? titleElement.textContent.trim() : '',
+        doc.body ? doc.body.innerHTML : fileContent
+      );
+    } catch (error) {
+      console.error('Erro ao importar ficheiro:', error);
+      setFeedback({ type: 'error', message: t('editor.import.failed', { message: error.message }) });
+    } finally {
+      input.value = '';
+    }
   };
 
   // Contagem de palavras/caracteres do artigo (sem markup)
@@ -830,6 +846,8 @@ function PostEditor({ theme, toggleTheme }) {
           type={feedback.type} 
           message={feedback.message} 
           onDismiss={() => setFeedback(null)}
+          duration={feedback.duration}
+          floating
         />
       )}
       
@@ -933,7 +951,7 @@ function PostEditor({ theme, toggleTheme }) {
                     {t('editor.buttons.importFile')}
                     <input
                       type="file"
-                      accept=".txt,.doc,.docx,.html"
+                      accept=".docx,.html,.htm,.txt"
                       onChange={handleFileImport}
                       style={{ display: 'none' }}
                     />
@@ -993,15 +1011,7 @@ function PostEditor({ theme, toggleTheme }) {
                 // via style inline não funciona porque o CKEditor limpa o
                 // atributo style do editável quando este recebe foco.
               }}
-              config={{
-                // Plugins adicionais: upload de imagens (base64) e
-                // preservação de largura/altura das imagens
-                extraPlugins: [Base64UploadAdapterPlugin, ImageSizeAttributesPlugin],
-                toolbar: EDITOR_TOOLBAR,
-                image: EDITOR_IMAGE_CONFIG,
-                table: EDITOR_TABLE_CONFIG,
-                language: i18n.getLocale().split('-')[0]
-              }}
+              config={editorConfig}
             />
           </div>
 
@@ -1030,7 +1040,6 @@ function PostEditor({ theme, toggleTheme }) {
         onFeedback={setFeedback}
       />
       
-      <ImageFormatter editor={editorInstance} />
       
       {/* Indicador de salvamento */}
       {saving && (

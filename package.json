@@ -22,10 +22,11 @@
   "dependencies": {
     "@capacitor/android": "^6.2.1",
     "@capacitor/core": "^6.2.1",
-    "@ckeditor/ckeditor5-build-classic": "^35.4.0",
-    "@ckeditor/ckeditor5-react": "^5.0.6",
+    "@ckeditor/ckeditor5-react": "^11.2.0",
     "@react-oauth/google": "^0.12.1",
+    "ckeditor5": "^48.5.2",
     "file-saver": "^2.0.5",
+    "mammoth": "^1.13.0",
     "node-schedule": "^2.1.1",
     "react": "^18.2.0",
     "react-datetime-picker": "^5.5.0",
@@ -65,7 +66,9 @@
   },
   "jest": {
     "moduleNameMapper": {
-      "^react-router/dom$": "<rootDir>/node_modules/react-router/dist/development/dom-export.js"
+      "^react-router/dom$": "<rootDir>/node_modules/react-router/dist/development/dom-export.js",
+      "^ckeditor5(/.*)?$": "<rootDir>/src/testStubs/ckeditor.js",
+      "^@ckeditor/ckeditor5-react$": "<rootDir>/src/testStubs/ckeditor.js"
     }
   }
 }

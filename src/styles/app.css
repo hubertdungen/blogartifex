@@ -586,10 +586,6 @@ input:focus, select:focus, textarea:focus {
   width: 100%;
 }
 
-.rich-editor {
-  border-radius: 8px;
-  overflow: hidden;
-}
 
 /* Templates */
 .templates-container {
@@ -1065,5 +1061,16 @@ body.dark .tox-statusbar {
   .settings-content {
     min-height: 0;
     padding: 20px 16px;
+  }
+
+  .editor-actions {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .editor-actions button {
+    white-space: nowrap;
+    padding: 9px 12px;
+    font-size: 0.9rem;
   }
 }

@@ -589,6 +589,7 @@ function Dashboard() {
           type={feedback.type}
           message={feedback.message}
           onDismiss={() => setFeedback(null)}
+          duration={feedback.duration}
         />
       )}
       
