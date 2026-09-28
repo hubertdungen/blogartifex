@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useGoogleLogin } from '@react-oauth/google';  // MUDANÇA AQUI
+import { useGoogleLogin, hasGrantedAllScopesGoogle } from '@react-oauth/google';
 import AuthService from '../services/AuthService';
 import Feedback from './Feedback';
 import LanguageSelector from './LanguageSelector';
@@ -34,6 +34,14 @@ function Login() {
       setIsLoading(true);
       setError(null);
       
+      // With granular consent the user can untick the Blogger permission;
+      // the token would then fail on every API call, so stop here.
+      if (!hasGrantedAllScopesGoogle(tokenResponse, AuthService.BLOGGER_API_SCOPE)) {
+        setError(t('auth.missingBloggerScope'));
+        setIsLoading(false);
+        return;
+      }
+
       try {
         // IMPORTANTE: Usar tokenResponse.access_token, não credential
         const tokenSaved = AuthService.setAuthToken(tokenResponse.access_token, tokenResponse.expires_in);

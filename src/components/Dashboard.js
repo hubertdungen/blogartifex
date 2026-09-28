@@ -107,8 +107,9 @@ function Dashboard() {
     } catch (error) {
       console.error('Error fetching blogs:', error);
       
-      // Handle authentication errors
+      // Handle authentication errors (and a token missing the Blogger scope)
       if (
+        error.code === 'SCOPE' ||
         error.message.includes('login') || 
         error.message.includes('authen') || 
         error.message.includes('token')

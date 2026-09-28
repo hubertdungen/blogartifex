@@ -6,6 +6,7 @@
  */
 
 import AuthService from './AuthService';
+import { t } from './I18nService';
 
 // API base URL
 const API_BASE_URL = 'https://www.googleapis.com/blogger/v3';
@@ -200,17 +201,16 @@ const request = async (endpoint, options = {}) => {
       const errorMessage = isJson && data.error ? 
         data.error.message : 'Access denied to the Blogger API.';
       
-      // Handle scope-related issues
-      if (errorMessage.includes('scope') || 
-          errorMessage.includes('permission') || 
-          errorMessage.includes('insufficient')) {
-        throw new Error(
-          'Your Google account does not have the required permissions. ' + 
-          'Please ensure you granted access to your Blogger blogs during login.'
-        );
+      // Token without the Blogger scope (e.g. the Blogger box left unticked
+      // on Google's granular consent screen): send the user back to sign in.
+      if (/insufficient authentication scopes/i.test(errorMessage)) {
+        const scopeError = new Error(t('auth.missingBloggerScope'));
+        scopeError.code = 'SCOPE';
+        throw scopeError;
       }
-      
-      throw new Error('Access denied to the Blogger API. ' + errorMessage);
+
+      // Anything else: keep Google's own message, it names the real cause.
+      throw new Error(`Blogger API (403): ${errorMessage}`);
     }
     
     // Handle rate limiting
@@ -277,18 +277,6 @@ const clearCache = () => {
   log.info('Cache cleared');
 };
 
-/**
- * Custom error for Blogger API
- */
-class BloggerApiError extends Error {
-  constructor(message, code, details = null) {
-    super(message);
-    this.name = 'BloggerApiError';
-    this.code = code;
-    this.details = details;
-  }
-}
-
 export const normalizeBlogListResponse = (data = {}) => {
   const itemBlogs = Array.isArray(data.items) ? data.items : [];
   const userInfoBlogs = Array.isArray(data.blogUserInfos)
@@ -313,20 +301,10 @@ export const normalizeBlogListResponse = (data = {}) => {
  * Retrieves the user's blogs
  */
 const getUserBlogs = async (options = {}) => {
-  try {
-    const data = await request('/users/self/blogs', { ...options });
-    return normalizeBlogListResponse(data);
-  } catch (error) {
-    // Convert to a more specific error
-    if (error.message.includes('permission')) {
-      throw new BloggerApiError(
-        'Your account does not have access to any Blogger blogs. Make sure you have created a blog or have been granted access to one.',
-        'PERMISSION_DENIED',
-        { originalError: error }
-      );
-    }
-    throw error;
-  }
+  // An account with no blogs gets an empty list (handled by the dashboard),
+  // so errors are passed through untouched instead of being guessed at.
+  const data = await request('/users/self/blogs', { ...options });
+  return normalizeBlogListResponse(data);
 };
 
 /**

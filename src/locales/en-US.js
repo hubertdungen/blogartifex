@@ -16,6 +16,7 @@ const translations = {
       confirmLogout: 'Are you sure you want to log out? Your local data will be preserved.',
       loginError: 'Authentication failed: {message}',
       checkConnection: 'Please check your connection and try again.',
+      missingBloggerScope: "BlogArtifex was not given access to Blogger. Sign in again and, on Google's screen, tick the permission to manage your Blogger account.",
       chooseBloggerAccount: 'Choose the Google account that has access to your Blogger blogs.'
     },
     
