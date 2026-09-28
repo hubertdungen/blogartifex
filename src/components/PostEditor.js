@@ -12,7 +12,8 @@ import AuthService from '../services/AuthService';
 import Feedback from './Feedback';
 import AIAssistant from './AIAssistant';
 import AISelectionMenu from './AISelectionMenu';
-import ImageFormatter from './ImageFormatter';
+import ImageTools from './ImageTools';
+import './ImageTools.css';
 import i18n, { t } from '../services/I18nService';
 import { getStoredJson, getStoredValue, setStoredValue } from '../utils/storage';
 import {
@@ -1030,7 +1031,7 @@ function PostEditor({ theme, toggleTheme }) {
         onFeedback={setFeedback}
       />
       
-      <ImageFormatter editor={editorInstance} />
+      <ImageTools editor={editorInstance} />
       
       {/* Indicador de salvamento */}
       {saving && (

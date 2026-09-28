@@ -34,8 +34,10 @@ donation button below.
   illustrate posts directly inside the editor — via chat, quick-action
   buttons, or a floating menu over selected text. Pick a writing tone in
   Settings, and the assistant can reuse your saved templates.
-- **Image formatting**: select an image to set its fit (standard, contain,
-  cover, stretch); the AI can control image size/position too.
+- **Image formatting**: select an image and a floating toolbar appears right
+  above it with size presets and fit modes (contain, cover, stretch), plus
+  corner handles to resize the image by hand (Illustrator-style); the AI can
+  control image size/position too.
 - Fixed a critical storage-migration bug that logged users out and wiped
   local data on every load; completed the rebrand across the whole app.
 - Text-editing fixes: working image upload (embedded as base64), image
@@ -328,6 +330,9 @@ BlogArtifex requires minimal permissions to:
 
 ## 🗺️ Roadmap (short-term)
 - Native Google sign-in flow for the Android app
+- **AI personalities** — reusable personas (name + system instructions/tone)
+  that can be activated in the AI assistant, fed by free-text boxes and by
+  attached documents used as a knowledge base
 - Streaming AI responses in the chat panel
 - Image upload to a hosting service (instead of base64 embedding)
 - More powerful template variables and snippets

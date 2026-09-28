@@ -1,0 +1,99 @@
+/* Floating image editor overlaid on the selected image: a toolbar docked
+   above it plus corner drag-handles for manual resizing. Positioned with
+   fixed coordinates that track the image's on-screen rectangle. */
+.image-tools-overlay {
+  position: fixed;
+  z-index: 1200;
+  pointer-events: none; /* let clicks fall through except on children */
+  outline: 2px solid var(--primary-color, #2563eb);
+  outline-offset: 1px;
+  border-radius: 2px;
+}
+
+/* Positioned from JS (kept inside the viewport, flipped below the image
+   when there is no room above). */
+.image-tools-bar {
+  position: fixed;
+  z-index: 1201;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 5px 7px;
+  border-radius: 9px;
+  border: 1px solid;
+  white-space: nowrap;
+  max-width: calc(100vw - 16px);
+  overflow-x: auto;
+}
+
+.light .image-tools-bar {
+  background: var(--card-light, #fff);
+  border-color: var(--border-light, #d8e0ec);
+  color: var(--text-dark, #172033);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+}
+
+.dark .image-tools-bar {
+  background: var(--card-dark, #272a30);
+  border-color: var(--border-dark, #3a3f49);
+  color: var(--text-light, #f8fafc);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+.image-tools-group-label {
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.55;
+  padding: 0 3px;
+}
+
+.image-tools-bar button {
+  font-size: 0.76rem;
+  min-height: 26px;
+  padding: 3px 9px;
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: inherit;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.image-tools-bar button:hover {
+  background: var(--primary-color, #2563eb);
+  color: #fff;
+  transform: none;
+}
+
+.image-tools-sep {
+  width: 1px;
+  align-self: stretch;
+  margin: 2px 3px;
+  background: currentColor;
+  opacity: 0.18;
+}
+
+/* Corner resize handles */
+.image-tools-handle {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border: 2px solid var(--primary-color, #2563eb);
+  border-radius: 3px;
+  pointer-events: auto;
+  touch-action: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.image-tools-handle.h-tl { top: -8px; left: -8px; }
+.image-tools-handle.h-tr { top: -8px; right: -8px; }
+.image-tools-handle.h-bl { bottom: -8px; left: -8px; }
+.image-tools-handle.h-br { bottom: -8px; right: -8px; }
+
+@media (max-width: 700px) {
+  .image-tools-bar { gap: 2px; padding: 4px; }
+  .image-tools-bar button { padding: 3px 6px; font-size: 0.72rem; }
+}

@@ -177,6 +177,14 @@ const translations = {
         fill: 'Fill Area (Cover)',
         stretch: 'Stretch'
       },
+      imageSize: {
+        label: 'Size',
+        original: 'Original',
+        small: 'Small',
+        medium: 'Medium',
+        large: 'Large',
+        full: 'Full'
+      },
       stats: {
         words: '{count} words',
         characters: '{count} characters'

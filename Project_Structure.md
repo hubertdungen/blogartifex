@@ -110,6 +110,8 @@ Curto prazo:
 - [x] Assistente de IA integrado no editor (chat + ações no documento)
 - [x] Menu de IA sobre seleção de texto (melhorar/corrigir/encurtar/expandir/pedido livre)
 - [x] Inserção de imagens do disco (base64) e redimensionamento/posicionamento
+- [x] Barra flutuante de imagem junto à imagem selecionada (tamanhos + modos de ajuste)
+- [x] Redimensionamento manual de imagens com pegas nos cantos (estilo Illustrator)
 - [x] Restauro de rascunhos locais auto-guardados
 - [x] Aplicação do blogue e modelo padrão definidos nas Definições
 - [ ] Streaming das respostas de IA no painel de chat
@@ -117,6 +119,13 @@ Curto prazo:
 - [ ] Variáveis de modelo mais poderosas (placeholders dinâmicos)
 
 Médio prazo:
+- [ ] **Personalidades de IA** — criar personalidades reutilizáveis que podem
+  ser activadas no assistente de IA. Cada personalidade define um nome, uma
+  descrição/instruções de sistema (tom, estilo, papel) e é alimentada por:
+  - [ ] caixas de texto (instruções e exemplos escritos pelo utilizador);
+  - [ ] documentos anexados (ficheiros de texto/markdown como base de conhecimento);
+  - [ ] selecção rápida da personalidade activa no painel do assistente;
+  - [ ] persistência local (`blogartifex_ai_personalities`) e edição/remoção.
 - [ ] Sugestões de SEO geradas por IA a partir do conteúdo
 - [ ] Histórico de conversas de IA por artigo
 - [ ] Suporte offline melhorado

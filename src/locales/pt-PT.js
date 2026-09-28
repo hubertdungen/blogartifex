@@ -177,6 +177,14 @@ const translations = {
         fill: 'Preencher Área (Cobrir)',
         stretch: 'Esticar'
       },
+      imageSize: {
+        label: 'Tamanho',
+        original: 'Original',
+        small: 'Pequeno',
+        medium: 'Médio',
+        large: 'Grande',
+        full: 'Total'
+      },
       stats: {
         words: '{count} palavras',
         characters: '{count} caracteres'
