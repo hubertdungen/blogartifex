@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { t } from '../services/I18nService';
 
 /**
@@ -52,8 +52,29 @@ const removeStyleProps = (styleStr, props) => {
 
 function ImageTools({ editor }) {
   const [box, setBox] = useState(null); // {top,left,width,height} viewport coords
+  const [barPos, setBarPos] = useState(null); // {top,left} viewport coords
   const stateRef = useRef({ modelImg: null, domImg: null });
   const dragRef = useRef(null);
+  const barRef = useRef(null);
+
+  // Place the toolbar above the image, centred on it but kept inside the
+  // viewport; flip it below the image when there is no room above (small
+  // screens, image at the top of the page).
+  useLayoutEffect(() => {
+    const bar = barRef.current;
+    if (!box || !bar) { setBarPos(null); return; }
+    const gap = 8;
+    const margin = 8;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const { width: bw, height: bh } = bar.getBoundingClientRect();
+    let left = box.left + box.width / 2 - bw / 2;
+    left = Math.max(margin, Math.min(left, vw - bw - margin));
+    let top = box.top - bh - gap;
+    if (top < margin) top = box.top + box.height + gap;
+    top = Math.max(margin, Math.min(top, vh - bh - margin));
+    setBarPos(prev => (prev && prev.top === top && prev.left === left) ? prev : { top, left });
+  }, [box]);
 
   const recompute = useCallback(() => {
     if (!editor || editor.state === 'destroyed') { setBox(null); return; }
@@ -83,6 +104,28 @@ function ImageTools({ editor }) {
       window.removeEventListener('resize', recompute);
     };
   }, [editor, recompute]);
+
+  // Layout can shift without any event we listen to (a banner appearing
+  // above the editor, an image finishing loading). While an image is
+  // selected, follow it every frame and only re-render when it moved.
+  const selected = !!box;
+  useEffect(() => {
+    if (!selected) return undefined;
+    let frame;
+    const follow = () => {
+      const { domImg } = stateRef.current;
+      if (domImg && domImg.isConnected && !dragRef.current) {
+        const r = domImg.getBoundingClientRect();
+        setBox(prev => (prev && prev.top === r.top && prev.left === r.left &&
+          prev.width === r.width && prev.height === r.height)
+          ? prev
+          : { top: r.top, left: r.left, width: r.width, height: r.height });
+      }
+      frame = requestAnimationFrame(follow);
+    };
+    frame = requestAnimationFrame(follow);
+    return () => cancelAnimationFrame(frame);
+  }, [selected]);
 
   const applyStyle = (mutate) => {
     const { modelImg } = stateRef.current;
@@ -186,9 +229,17 @@ function ImageTools({ editor }) {
   );
 
   return (
-    <div className="image-tools-overlay" style={{ top: box.top, left: box.left, width: box.width, height: box.height }}>
+    <>
+      <div className="image-tools-overlay" style={{ top: box.top, left: box.left, width: box.width, height: box.height }}>
+        {handle('tl', 'nwse-resize')}
+        {handle('tr', 'nesw-resize')}
+        {handle('bl', 'nesw-resize')}
+        {handle('br', 'nwse-resize')}
+      </div>
       <div
+        ref={barRef}
         className="image-tools-bar"
+        style={barPos ? { top: barPos.top, left: barPos.left } : { visibility: 'hidden' }}
         onMouseDown={(e) => e.preventDefault()}
         role="toolbar"
         aria-label={t('editor.imageFormat.title')}
@@ -206,11 +257,7 @@ function ImageTools({ editor }) {
           </button>
         ))}
       </div>
-      {handle('tl', 'nwse-resize')}
-      {handle('tr', 'nesw-resize')}
-      {handle('bl', 'nesw-resize')}
-      {handle('br', 'nwse-resize')}
-    </div>
+    </>
   );
 }
 

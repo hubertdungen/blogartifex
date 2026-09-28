@@ -10,11 +10,11 @@
   border-radius: 2px;
 }
 
+/* Positioned from JS (kept inside the viewport, flipped below the image
+   when there is no room above). */
 .image-tools-bar {
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
+  position: fixed;
+  z-index: 1201;
   pointer-events: auto;
   display: flex;
   align-items: center;
@@ -23,7 +23,7 @@
   border-radius: 9px;
   border: 1px solid;
   white-space: nowrap;
-  max-width: 92vw;
+  max-width: calc(100vw - 16px);
   overflow-x: auto;
 }
 
