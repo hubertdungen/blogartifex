@@ -88,6 +88,12 @@ ativa.
 
 ## ✨ Novidades
 
+- **Editor pensado para o Word** (CKEditor 48, só funcionalidades
+  open-source): cole diretamente do Word e mantenha tipos de letra,
+  tamanhos, cores, alinhamento, listas, tabelas e imagens; importe ficheiros
+  `.docx`; posicione imagens com texto à volta, redimensione-as e ponha
+  legendas; propriedades de tabelas e células. O que compõe no editor é o que
+  o Blogger mostra — os estilos de layout vão inline ao publicar.
 - **Renomeado para BlogArtifex** com um novo logótipo vetorial coerente (uma
   ponta de caneta roxo→ciano que se dissolve em píxeis), usado de forma
   consistente no ícone da app, favicon e ícones Android.

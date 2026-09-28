@@ -26,6 +26,12 @@ donation button below.
 
 ## 🆕 What's New
 
+- **Word-friendly editor** (CKEditor 48, open-source features only): paste
+  straight from Word and keep fonts, sizes, colours, alignment, lists,
+  tables and images; import `.docx` files; position images with text
+  wrapping, resize them and add captions; table and cell properties. What
+  you lay out in the editor is what Blogger shows — layout styles are
+  inlined on publish.
 - **Rebranded to BlogArtifex** with a new, coherent vector logo (a
   purple→cyan pen nib dissolving into pixels) used consistently across the
   app icon, favicon and Android launcher icons.
