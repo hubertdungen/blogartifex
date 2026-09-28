@@ -89,19 +89,28 @@ const request = async (endpoint, options = {}) => {
   const token = AuthService.getAuthToken();
   if (!token) {
     log.error('No authentication token found');
-    throw new Error('Authentication required. Please log in.');
+    const authError = new Error('Authentication required. Please log in.');
+    authError.code = 'AUTH';
+    throw authError;
   }
   
   // Validate token format and expiration
   if (!AuthService.validateToken()) {
     log.warn('Token validation failed, removing invalid token');
     AuthService.removeAuthToken('BloggerService-invalid');
-    throw new Error('Authentication session expired or invalid. Please log in again.');
+    const authError = new Error('Authentication session expired or invalid. Please log in again.');
+    authError.code = 'AUTH';
+    throw authError;
   }
   
   // Prepare request URL
   const url = `${API_BASE_URL}${endpoint}`;
   
+  // Any write can change what cached GETs return (post bodies, lists, counts).
+  if (options.method && options.method !== 'GET') {
+    cache.clear();
+  }
+
   // Check cache for GET requests
   if (options.method === 'GET' || !options.method) {
     const cacheKey = generateCacheKey(endpoint, options.params, token);
@@ -177,7 +186,9 @@ const request = async (endpoint, options = {}) => {
       // Clear invalid token
       AuthService.removeAuthToken('BloggerService-401');
       
-      throw new Error('Your session has expired. Please log in again.');
+      const authError = new Error('Your session has expired. Please log in again.');
+      authError.code = 'AUTH';
+      throw authError;
     }
     
     // Handle permission errors

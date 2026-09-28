@@ -15,6 +15,7 @@ const translations = {
       loggingIn: 'Logging in...',
       confirmLogout: 'Are you sure you want to log out? Your local data will be preserved.',
       loginError: 'Authentication failed: {message}',
+      checkConnection: 'Please check your connection and try again.',
       chooseBloggerAccount: 'Choose the Google account that has access to your Blogger blogs.'
     },
     
@@ -55,6 +56,15 @@ const translations = {
         scheduled: 'Scheduled',
         postsByMonth: 'Posts by Month'
       },
+      messages: {
+        loadBlogsError: 'Error loading blogs: {error}',
+        loadPostsError: 'Error loading posts: {error}',
+        duplicating: 'Loading post to duplicate...',
+        duplicateError: 'Error duplicating post: {error}',
+        deleting: 'Deleting post...',
+        deleted: 'Post deleted.',
+        deleteError: 'Error deleting post: {error}'
+      },
       posts: {
         recentPosts: 'Recent Posts',
         noPosts: 'No posts found.',
@@ -72,6 +82,7 @@ const translations = {
         actions: {
           edit: 'Edit',
           duplicate: 'Duplicate',
+          copyOf: 'Copy of {title}',
           delete: 'Delete',
           view: 'View',
           confirmDelete: 'Are you sure you want to delete this post? This action cannot be undone.'
@@ -123,6 +134,7 @@ const translations = {
       },
       templates: {
         select: 'Select template',
+        replaceConfirm: 'Applying the template replaces the current post content. Continue?',
         none: 'None',
         templateName: 'Template name:'
       },
@@ -389,6 +401,7 @@ const translations = {
     },
     
     common: {
+      unexpectedError: 'Something went wrong.',
       loading: 'Loading...',
       error: 'Error: {message}',
       success: 'Success!',

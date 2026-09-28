@@ -53,7 +53,6 @@ blogartifex/
 │   │   ├── logger.js
 │   │   └── storage.js            # Acesso seguro ao localStorage
 │   ├── App.js                    # Rotas e layout autenticado
-│   ├── BlogArtifex.js
 │   ├── index.js                  # Entrada da aplicação (GoogleOAuthProvider)
 │   ├── reportWebVitals.js
 │   └── setupTests.js

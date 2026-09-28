@@ -71,7 +71,6 @@ ativa.
      predefinidos.
    - `REACT_APP_GOOGLE_CLIENT_ID` é opcional para uso local normal, porque o
      BlogArtifex inclui um ID de cliente OAuth predefinido.
-   - `REACT_APP_TINYMCE_API_KEY` também é opcional.
 
 4. Executar a aplicação
    ```bash
@@ -218,7 +217,7 @@ uma release pública, correr um fork ou substituir o ID de cliente OAuth incluí
 - Verificar conectividade de rede
 - Garantir que o navegador suporta fluxos OAuth modernos
 - Se receber 401/403, termine sessão e inicie sessão novamente
-- O projeto usa `react-scripts` com `--openssl-legacy-provider` nos scripts `npm` para compatibilidade no Node 18
+- Build: `react-scripts` 5 (webpack 5); Node 18 ou mais recente, sem opções extra
 
 ## 🧪 Build & Testes
 

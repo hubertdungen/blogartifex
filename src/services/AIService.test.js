@@ -8,6 +8,7 @@ import AIService, {
   parseAssistantResponse,
   stripCodeFences,
   sanitizeAIHtml,
+  trimHistory,
   buildEditorContextMessage
 } from './AIService';
 
@@ -101,9 +102,30 @@ describe('sanitizeAIHtml', () => {
     expect(clean).toContain('<p');
   });
 
+  test('catches unquoted handlers and entity-encoded schemes', () => {
+    const clean = sanitizeAIHtml('<img src=x onerror=alert(1)><a href="jav&#x61;script:x()">a</a><svg onload=alert(1)></svg><a href="foto.png">ok</a>');
+    expect(clean).not.toMatch(/onerror|onload|javascript/i);
+    expect(clean).toContain('href="foto.png"');
+  });
+
   test('keeps image markup with size and alignment', () => {
     const html = '<figure class="image image-style-align-right"><img src="https://example.com/a.png" width="320" alt="x"></figure>';
     expect(sanitizeAIHtml(html)).toBe(html);
+  });
+});
+
+describe('trimHistory', () => {
+  test('drops error/empty turns and a leading assistant turn', () => {
+    const history = [
+      { role: 'assistant', content: 'hello' },
+      { role: 'user', content: 'q1' },
+      { role: 'assistant', content: '', error: 'boom' },
+      { role: 'user', content: 'q2' }
+    ];
+    expect(trimHistory(history)).toEqual([
+      { role: 'user', content: 'q1' },
+      { role: 'user', content: 'q2' }
+    ]);
   });
 });
 

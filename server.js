@@ -74,7 +74,9 @@ const requestHandler = (req, res) => {
 };
 
 const shouldOpenBrowser = () => {
-  return process.env.BLOGCRAFT_OPEN_BROWSER !== '0' && process.env.CI !== 'true';
+  // BLOGCRAFT_OPEN_BROWSER is the pre-rebrand name, still honoured.
+  const setting = process.env.BLOGARTIFEX_OPEN_BROWSER ?? process.env.BLOGCRAFT_OPEN_BROWSER;
+  return setting !== '0' && process.env.CI !== 'true';
 };
 
 const openBrowser = (url) => {

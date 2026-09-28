@@ -86,11 +86,11 @@ function AISelectionMenu({ editor, getTitle, onFeedback }) {
     }
   };
 
-  const replaceSelection = (html) => {
-    if (!editor) return false;
+  const replaceRange = (html, range) => {
+    if (!editor || editor.state === 'destroyed') return false;
     const viewFragment = editor.data.processor.toView(html);
     const modelFragment = editor.data.toModel(viewFragment);
-    editor.model.insertContent(modelFragment);
+    editor.model.insertContent(modelFragment, range);
     return true;
   };
 
@@ -105,6 +105,9 @@ function AISelectionMenu({ editor, getTitle, onFeedback }) {
 
     setBusy(true);
     busyRef.current = true;
+    // The reply can take a while and the user may keep typing: a live range
+    // follows edits, so the rewrite replaces the text that was sent.
+    const targetRange = editor.model.createLiveRange(editor.model.document.selection.getFirstRange());
 
     try {
       const replacement = await AIService.transformSelection({
@@ -114,7 +117,7 @@ function AISelectionMenu({ editor, getTitle, onFeedback }) {
         locale: i18n.getLocale()
       });
 
-      replaceSelection(replacement);
+      replaceRange(replacement, targetRange);
       if (onFeedback) {
         onFeedback({ type: 'success', message: t('ai.selection.applied'), duration: 3000 });
       }
@@ -123,6 +126,7 @@ function AISelectionMenu({ editor, getTitle, onFeedback }) {
         onFeedback({ type: 'error', message: t('ai.chat.error', { message: error.message }) });
       }
     } finally {
+      targetRange.detach();
       setBusy(false);
       busyRef.current = false;
       hide();

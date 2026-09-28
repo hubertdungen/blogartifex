@@ -420,6 +420,9 @@
 @media (max-width: 1180px) {
   .editor-body {
     flex-direction: column;
+    /* Em coluna, flex-start deixava o editor com a largura mínima da barra
+       do CKEditor (~640px) e a página transbordava no telemóvel. */
+    align-items: stretch;
   }
 
   .editor-body .ai-panel {

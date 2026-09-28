@@ -58,7 +58,7 @@ function AIAssistant({ getTitle, getContent, getSelectionHtml, applyAction, onCl
       const selectionHtml = getSelectionHtml ? getSelectionHtml() : '';
       const templates = getStoredJson('blogartifex_templates', []);
       const { reply, actions } = await AIService.chat({
-        history: messages.map(m => ({ role: m.role, content: m.content })),
+        history: messages,
         userMessage: text,
         title: getTitle(),
         html: getContent(),

@@ -6,6 +6,7 @@
 // Constants
 const TOKEN_KEY = 'blogartifex_token';
 const ACCOUNT_KEY = 'blogartifex_account';
+const EXPIRES_KEY = 'blogartifex_token_expires';
 const BLOGGER_API_SCOPE = 'https://www.googleapis.com/auth/blogger';
 const CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID || '';
 const USER_INFO_ENDPOINT = 'https://openidconnect.googleapis.com/v1/userinfo';
@@ -79,7 +80,7 @@ const removeStoredAccount = () => {
  * @param {string} token - The token to store
  * @returns {boolean} True if successful, false otherwise
  */
-const setAuthToken = (token) => {
+const setAuthToken = (token, expiresIn) => {
   if (!token) {
     log.warn('Attempted to store empty token, ignoring');
     return false;
@@ -87,6 +88,12 @@ const setAuthToken = (token) => {
   
   try {
     localStorage.setItem(TOKEN_KEY, token);
+    // Google access tokens are opaque; expires_in (seconds) is the only way to know when they die.
+    if (expiresIn) {
+      localStorage.setItem(EXPIRES_KEY, String(Date.now() + Number(expiresIn) * 1000));
+    } else {
+      localStorage.removeItem(EXPIRES_KEY);
+    }
     removeStoredAccount();
     log.info('Token successfully stored');
     
@@ -120,6 +127,7 @@ const removeAuthToken = (source = 'unknown') => {
     }
     
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(EXPIRES_KEY);
     log.info(`Token removed (source: ${source})`);
     
     // Verify removal
@@ -273,10 +281,14 @@ const isTokenExpired = () => {
     return true;
   }
   
-  // MUDANÇA: Se for um access token opaco, não conseguimos verificar expiração
+  // Google access tokens (ya29.…) are opaque even though they contain dots:
+  // the expiry recorded at login is authoritative (1-minute margin).
+  const expiresAt = Number(localStorage.getItem(EXPIRES_KEY));
+  if (expiresAt) {
+    return Date.now() > expiresAt - 60000;
+  }
   if (!token.includes('.')) {
-    log.info('Token is opaque access token, cannot check expiration');
-    return false; // Assumir que não expirou
+    return false; // legacy session without a recorded expiry; a 401 will end it
   }
   
   const payload = decodeToken(token);
@@ -337,11 +349,8 @@ const validateToken = (strictMode = false) => {
     return false;
   }
   
-  // MUDANÇA: Access tokens podem não ser JWTs decodificáveis
-  // Se for um access token opaco, apenas verificar se existe
-  if (!token.includes('.')) {
-    log.info('Token appears to be an opaque access token');
-    return true; // Aceitar tokens opacos
+  if (localStorage.getItem(EXPIRES_KEY) || !token.includes('.')) {
+    return !isTokenExpired();
   }
   
   // Se parecer um JWT, tentar decodificar

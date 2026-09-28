@@ -124,9 +124,7 @@
   .labels-input,
   .template-select,
   .schedule-input,
-  .draft-toggle,
-  .metadata-toggle,
-  .import-export {
+  .draft-toggle {
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -199,56 +197,6 @@
     min-height: 40px;
   }
 
-  .metadata-toggle,
-  .import-export {
-    justify-content: flex-end;
-  }
-  
-  .metadata-toggle button {
-    background-color: transparent;
-    border: 1px solid var(--border-dark);
-    color: inherit;
-    min-height: 40px;
-    width: 100%;
-  }
-
-  .light .metadata-toggle button {
-    border-color: var(--border-light);
-  }
-  
-  .metadata-toggle button:hover {
-    background-color: rgba(37, 99, 235, 0.1);
-  }
-  
-  .import-export {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
-  
-  .import-export button,
-  .import-export .file-input-label {
-    background-color: transparent;
-    border: 1px solid var(--border-dark);
-    color: inherit;
-    text-align: center;
-    padding: 10px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    min-height: 40px;
-    font-weight: 600;
-  }
-
-  .light .import-export button,
-  .light .import-export .file-input-label {
-    border-color: var(--border-light);
-  }
-  
-  .import-export button:hover,
-  .import-export .file-input-label:hover {
-    background-color: rgba(37, 99, 235, 0.1);
-  }
-  
   .metadata-editor {
     margin-top: 20px;
     padding: 20px;
@@ -463,13 +411,6 @@
       align-items: flex-start;
     }
     
-    .editor-content .post-actions {
-      grid-template-columns: 1fr;
-    }
-    
-    .import-export {
-      grid-template-columns: 1fr;
-    }
   }
   
   /* CKEditor Theme Isolation - Always show as light theme */
@@ -527,4 +468,130 @@
 .ck-editor__editable:focus {
   background-color: #ffffff !important;
   color: #333333 !important;
+}
+
+/* ---- Opções do post: campos em cima, barra de opções/ações em baixo ----
+   Seletores com .editor-content .post-options para ganhar às regras antigas
+   (duplicadas em app.css) sem depender da ordem dos ficheiros. */
+.editor-content .post-options .post-actions {
+  /* Bloco simples: em flex-direction: column o Chrome dimensionava
+     .post-fields como se os dois campos quebrassem de linha (vazio de 90px). */
+  display: block;
+  margin-bottom: 0;
+}
+
+.editor-content .post-options .post-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 20px;
+  align-items: flex-start;
+}
+
+.editor-content .post-options .post-fields > * {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+.editor-content .post-options .labels-input input {
+  width: 100%;
+  min-height: 40px;
+}
+
+.editor-content .post-options .template-select {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.editor-content .post-options .template-select label {
+  grid-column: 1 / -1;
+}
+
+.editor-content .post-options .template-select select {
+  margin-bottom: 0;
+  min-height: 40px;
+}
+
+.editor-content .post-options .template-select button {
+  width: auto;
+  padding: 0 14px;
+  white-space: nowrap;
+}
+
+.editor-content .post-options .post-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 24px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-dark);
+}
+
+.light .editor-content .post-options .post-toolbar {
+  border-top-color: var(--border-light);
+}
+
+.editor-content .post-options .schedule-input,
+.editor-content .post-options .draft-toggle {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.editor-content .post-options .schedule-input label,
+.editor-content .post-options .draft-toggle label {
+  min-height: 40px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.editor-content .post-options .schedule-input .react-datetime-picker {
+  width: auto;
+}
+
+.editor-content .post-options .post-toolbar-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.editor-content .post-options .post-toolbar-buttons button,
+.editor-content .post-options .post-toolbar-buttons .file-input-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--border-dark);
+  border-radius: 6px;
+  background-color: transparent;
+  color: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.light .editor-content .post-options .post-toolbar-buttons button,
+.light .editor-content .post-options .post-toolbar-buttons .file-input-label {
+  border-color: var(--border-light);
+}
+
+.editor-content .post-options .post-toolbar-buttons button:hover,
+.editor-content .post-options .post-toolbar-buttons .file-input-label:hover {
+  background-color: rgba(37, 99, 235, 0.1);
+}
+
+@media (max-width: 768px) {
+  .editor-content .post-options .post-toolbar-buttons {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .editor-content .post-options .post-toolbar-buttons > * {
+    flex: 1 1 auto;
+  }
 }

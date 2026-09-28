@@ -130,12 +130,14 @@
   
   .dashboard-stats {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    /* Três contadores (publicados, rascunhos, agendados) + o gráfico */
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 16px;
     margin-bottom: 34px;
   }
   
   .stat-card {
+    min-width: 0;
     padding: 18px;
     border-radius: 8px;
     border: 1px solid;
@@ -170,8 +172,9 @@
     color: var(--primary-color);
   }
   
+  /* O gráfico ocupa sempre a linha inteira, por baixo dos contadores */
   .stat-chart {
-    grid-column: span 3;
+    grid-column: 1 / -1;
   }
   
   .month-chart {
@@ -422,8 +425,16 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #999;
-    font-size: 0.75rem;
+    flex-shrink: 0;
+    /* Inicial do título sobre o gradiente do logótipo (roxo → ciano) */
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.22), rgba(6, 182, 212, 0.18));
+    color: #8b5cf6;
+    font-size: 1.9rem;
+    font-weight: 700;
+  }
+
+  .dark .post-thumbnail.no-image {
+    color: #c4b5fd;
   }
   
   .post-info {
@@ -537,16 +548,6 @@
   }
   
   /* Responsividade */
-  @media (max-width: 1024px) {
-    .dashboard-stats {
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    }
-    
-    .stat-chart {
-      grid-column: span 2;
-    }
-  }
-  
   @media (max-width: 768px) {
     .dashboard-header {
       flex-direction: column;
@@ -569,14 +570,6 @@
       gap: 15px;
     }
     
-    .dashboard-stats {
-      grid-template-columns: 1fr 1fr;
-    }
-    
-    .stat-chart {
-      grid-column: span 2;
-    }
-    
     .month-chart {
       overflow-x: auto;
       padding-bottom: 10px;
@@ -592,6 +585,10 @@
       height: auto;
       max-height: 200px;
     }
+
+    .post-thumbnail.no-image {
+      display: none;
+    }
     
     .post-actions {
       margin-top: 15px;
@@ -602,11 +599,7 @@
   
   @media (max-width: 480px) {
     .dashboard-stats {
-      grid-template-columns: 1fr;
-    }
-    
-    .stat-chart {
-      grid-column: span 1;
+      grid-template-columns: minmax(0, 1fr);
     }
     
     .post-meta {

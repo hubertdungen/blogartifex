@@ -6,5 +6,4 @@ IF NOT EXIST node_modules (
   npm install
 )
 
-set NODE_OPTIONS=--openssl-legacy-provider
 npm start
