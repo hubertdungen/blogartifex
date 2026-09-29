@@ -185,6 +185,14 @@ const translations = {
       codeBlock: {
         plain: 'Plain text'
       },
+      labelsAuto: {
+        button: "✨ Suggest",
+        tooltip: "Add the blog's existing labels that fit this article",
+        learning: "Reading your blog's labels…",
+        added: "Labels added: {labels} (learnt from {count} posts). Remove any you don't want.",
+        none: "None of the blog's labels fits this article clearly.",
+        noLabels: "Your published posts have no labels yet, so there is nothing to suggest."
+      },
       format: {
         button: "✨ Format like my blog",
         learning: "Learning your blog's style…",
