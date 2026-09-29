@@ -45,11 +45,8 @@ blogartifex/
 │   │   ├── settings.css
 │   │   └── templates.css
 │   ├── utils/
-│   │   ├── ckeditorExtensions.js # Plugins runtime do CKEditor (upload base64,
-│   │   │                         # preservação de largura/altura de imagens,
-│   │   │                         # configuração de toolbar)
-│   │   ├── dateUtils.js
-│   │   ├── fileUtils.js
+│   │   ├── bloggerHtml.js        # Estilos inline para o Blogger (publicar/reabrir)
+│   │   ├── editorConfig.js       # CKEditor 48: plugins, toolbar estilo Word, pt-PT
 │   │   ├── logger.js
 │   │   └── storage.js            # Acesso seguro ao localStorage
 │   ├── App.js                    # Rotas e layout autenticado
@@ -70,12 +67,15 @@ blogartifex/
 
 - **UI**: React 18 com `react-router-dom` (HashRouter). Tema claro/escuro
   aplicado via classe no `body`.
-- **Editor**: CKEditor 5 (build clássico) com plugins runtime adicionais em
-  `src/utils/ckeditorExtensions.js`:
-  - upload de imagens do disco como data URLs base64;
-  - preservação dos atributos `width`/`height` das imagens (necessário para o
-    redimensionamento feito pela IA e por conteúdo importado);
-  - toolbar limitada às funcionalidades realmente existentes no build.
+- **Editor**: CKEditor 5 v48 (pacote `ckeditor5`, só funcionalidades
+  open-source, `licenseKey: 'GPL'`), configurado em `src/utils/editorConfig.js`:
+  - toolbar ao estilo do friso do Word (tipos de letra, cores, alinhamento,
+    listas, tabelas com propriedades, imagens com posição/tamanho/legenda);
+  - colar do Word (PasteFromOffice) e HTML arbitrário preservado (GHS);
+  - importação `.docx` com `mammoth`, carregado a pedido.
+- **Blogger** (`src/utils/bloggerHtml.js`): ao publicar põe inline os estilos de
+  layout que os temas não têm (marcados em `data-ba-style`); ao reabrir remove
+  exatamente esses.
 - **Assistente de IA** (`src/services/AIService.js`):
   - Fornecedores suportados: OpenAI (GPT), Google (Gemini), Anthropic (Claude).
   - A chave de API é fornecida pelo utilizador e guardada apenas no
@@ -110,6 +110,8 @@ Curto prazo:
 - [x] Assistente de IA integrado no editor (chat + ações no documento)
 - [x] Menu de IA sobre seleção de texto (melhorar/corrigir/encurtar/expandir/pedido livre)
 - [x] Inserção de imagens do disco (base64) e redimensionamento/posicionamento
+- [x] Barra da imagem junto à imagem selecionada (posição, tamanhos, legenda) — nativa do CKEditor 48
+- [x] Redimensionamento manual de imagens com pegas nos cantos — nativo do CKEditor 48
 - [x] Restauro de rascunhos locais auto-guardados
 - [x] Aplicação do blogue e modelo padrão definidos nas Definições
 - [ ] Streaming das respostas de IA no painel de chat
@@ -117,6 +119,13 @@ Curto prazo:
 - [ ] Variáveis de modelo mais poderosas (placeholders dinâmicos)
 
 Médio prazo:
+- [ ] **Personalidades de IA** — criar personalidades reutilizáveis que podem
+  ser activadas no assistente de IA. Cada personalidade define um nome, uma
+  descrição/instruções de sistema (tom, estilo, papel) e é alimentada por:
+  - [ ] caixas de texto (instruções e exemplos escritos pelo utilizador);
+  - [ ] documentos anexados (ficheiros de texto/markdown como base de conhecimento);
+  - [ ] selecção rápida da personalidade activa no painel do assistente;
+  - [ ] persistência local (`blogartifex_ai_personalities`) e edição/remoção.
 - [ ] Sugestões de SEO geradas por IA a partir do conteúdo
 - [ ] Histórico de conversas de IA por artigo
 - [ ] Suporte offline melhorado

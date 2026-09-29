@@ -103,8 +103,10 @@ ativa.
   ações rápidas ou um menu flutuante sobre o texto selecionado. Escolha um tom
   de escrita nas Definições; o assistente também pode reutilizar os seus
   modelos guardados.
-- **Formatação de imagens**: selecione uma imagem para definir o ajuste
-  (padrão, conter, cobrir, esticar); a IA também pode controlar tamanho/posição.
+- **Formatação de imagens**: selecione uma imagem para a posicionar (texto à
+  volta à esquerda/direita, lateral, centrada, em linha), redimensioná-la
+  pelas pegas dos cantos ou para 25–100% e pôr-lhe legenda; a IA também pode
+  controlar tamanho/posição.
 - Corrigido um bug crítico de migração de armazenamento que terminava a sessão
   e apagava os dados locais em cada carregamento; rebrand concluído em toda a app.
 - Correções na edição de texto: upload de imagens funcional (incorporadas em
@@ -331,6 +333,10 @@ O BlogArtifex requer permissões mínimas para:
 
 ## 🗺️ Roadmap (curto prazo)
 - Fluxo de login Google nativo para a app Android
+- **Personalidades de IA** — personas reutilizáveis (nome + instruções de
+  sistema/tom) que podem ser activadas no assistente de IA, alimentadas por
+  caixas de texto livres e por documentos anexados usados como base de
+  conhecimento
 - Streaming das respostas de IA no painel de chat
 - Upload de imagens para um serviço de alojamento (em vez de base64)
 - Variáveis/snippets de template mais poderosos
