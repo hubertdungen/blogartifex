@@ -337,7 +337,24 @@ const getPost = async (blogId, postId, options = {}) => {
   if (!blogId || !postId) {
     throw new Error('Blog ID and Post ID are required');
   }
-  return request(`/blogs/${blogId}/posts/${postId}`, { ...options });
+  // The API doesn't document which view drafts need; a plain request can
+  // 404/403 on a draft, so fall back to the author's and the admin's view.
+  const endpoint = `/blogs/${blogId}/posts/${postId}`;
+  let lastError;
+  for (const view of [null, 'AUTHOR', 'ADMIN']) {
+    try {
+      return await request(endpoint, {
+        ...options,
+        params: { ...(options.params || {}), ...(view ? { view } : {}) }
+      });
+    } catch (error) {
+      lastError = error;
+      if (error.code === 'AUTH' || !/40[34]|not found|access denied|permission/i.test(`${error.status || ''} ${error.message}`)) {
+        throw error;
+      }
+    }
+  }
+  throw lastError;
 };
 
 /**

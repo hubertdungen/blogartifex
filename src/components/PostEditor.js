@@ -324,7 +324,7 @@ function PostEditor({ theme, toggleTheme }) {
 
       setFeedback({
         type: 'error',
-        message: t('editor.errors.loadPost')
+        message: `${t('editor.errors.loadPost')} (${error.message})`
       });
     } finally {
       setLoading(false);
