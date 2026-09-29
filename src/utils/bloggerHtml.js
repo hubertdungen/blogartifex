@@ -19,13 +19,16 @@ const RULES = [
   ['figure.image.image-style-align-left', { float: 'left', margin: '0.3em 1.5em 1em 0' }],
   ['figure.image.image-style-align-right', { float: 'right', margin: '0.3em 0 1em 1.5em' }],
   ['figure.image.image-style-side', { float: 'right', margin: '0.3em 0 1em 1.5em', 'max-width': '50%' }],
+  ['figure.image.image-style-full-width', { display: 'block', width: '100%', 'max-width': '100%', margin: '1em 0', clear: 'both' }],
   ['figure.image.image-style-block-align-left', { margin: '0.9em auto 0.9em 0' }],
   ['figure.image.image-style-block-align-right', { margin: '0.9em 0 0.9em auto' }],
   ['figure.image.image_resized', { display: 'block', 'max-width': '100%', 'box-sizing': 'border-box' }],
   ['figure.image', { display: 'table', clear: 'both', 'text-align': 'center', margin: '0.9em auto', 'max-width': '100%' }],
   ['figure.image.image_resized > img', { width: '100%' }],
+  ['figure.image.image-style-full-width > img', { width: '100%' }],
   ['figure.image img', { display: 'block', margin: '0 auto', 'max-width': '100%', height: 'auto' }],
   ['figure.image.image_resized > figcaption', { display: 'block' }],
+  ['figure.image.image-style-full-width > figcaption', { display: 'block' }],
   ['figure.image > figcaption', {
     display: 'table-caption', 'caption-side': 'bottom', padding: '0.6em',
     'font-size': '0.85em', color: '#555', 'text-align': 'center'

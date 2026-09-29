@@ -176,6 +176,7 @@ const translations = {
         openInNewTab: 'Open in a new tab'
       },
       image: {
+        fullWidth: 'Full text width',
         wrapText: 'Wrap text',
         breakText: 'Break text',
         original: 'Original size'

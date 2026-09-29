@@ -19,7 +19,7 @@ import {
   Table, TableToolbar, TableProperties, TableCellProperties, TableCaption, TableColumnResize,
   MediaEmbed, PasteFromOffice, GeneralHtmlSupport, SourceEditing,
   FindAndReplace, ShowBlocks, Fullscreen,
-  Plugin, ClipboardPipeline, UpcastWriter
+  Plugin, ClipboardPipeline, UpcastWriter, IconObjectFullWidth
 } from 'ckeditor5';
 import ptTranslations from 'ckeditor5/translations/pt.js';
 import 'ckeditor5/ckeditor5.css';
@@ -58,6 +58,32 @@ class DropLocalImages extends Plugin {
   }
 }
 
+/**
+ * "Text width" image style: the image spans the text column. Choosing it
+ * clears any earlier resize (an inline 40% would otherwise win), and
+ * resizing such an image by hand turns it back into a centred image.
+ */
+class FullWidthImages extends Plugin {
+  afterInit() {
+    const editor = this.editor;
+    const style = editor.commands.get('imageStyle');
+    const resize = editor.commands.get('resizeImage');
+    if (!style || !resize) return;
+
+    this.listenTo(style, 'execute', (evt, [options]) => {
+      if (options && options.value === 'fullWidth' && resize.value && resize.value.width) {
+        editor.execute('resizeImage', { width: null });
+      }
+    }, { priority: 'low' });
+
+    this.listenTo(resize, 'execute', (evt, [options]) => {
+      if (options && options.width && style.value === 'fullWidth') {
+        editor.execute('imageStyle', { value: 'alignCenter' });
+      }
+    }, { priority: 'low' });
+  }
+}
+
 const PLUGINS = [
   Essentials, Paragraph, Heading, Autoformat, TextTransformation, SelectAll,
   Bold, Italic, Underline, Strikethrough, Subscript, Superscript, Code, RemoveFormat,
@@ -69,7 +95,7 @@ const PLUGINS = [
   ImageInsertViaUrl, Base64UploadAdapter,
   Table, TableToolbar, TableProperties, TableCellProperties, TableCaption, TableColumnResize,
   MediaEmbed, PasteFromOffice, GeneralHtmlSupport, SourceEditing,
-  FindAndReplace, ShowBlocks, Fullscreen, DropLocalImages
+  FindAndReplace, ShowBlocks, Fullscreen, DropLocalImages, FullWidthImages
 ];
 
 // CKEditor's community "pt" translation is European Portuguese, but a few
@@ -211,12 +237,21 @@ export const buildEditorConfig = ({ locale, placeholder, compact = false, onLoca
           items: ['imageStyle:alignBlockLeft', 'imageStyle:alignCenter', 'imageStyle:alignBlockRight'],
           defaultItem: 'imageStyle:alignCenter'
         },
-        'imageStyle:inline', 'imageStyle:side',
+        'imageStyle:fullWidth', 'imageStyle:inline', 'imageStyle:side',
         '|', 'resizeImage',
         '|', 'toggleImageCaption', 'imageTextAlternative', 'linkImage'
       ],
       styles: {
-        options: ['inline', 'alignLeft', 'alignRight', 'alignCenter', 'alignBlockLeft', 'alignBlockRight', 'block', 'side']
+        options: [
+          'inline', 'alignLeft', 'alignRight', 'alignCenter', 'alignBlockLeft', 'alignBlockRight', 'block', 'side',
+          {
+            name: 'fullWidth',
+            title: t('editor.image.fullWidth'),
+            icon: IconObjectFullWidth,
+            modelElements: ['imageBlock'],
+            className: 'image-style-full-width'
+          }
+        ]
       },
       resizeUnit: '%',
       resizeOptions: [

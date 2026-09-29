@@ -591,6 +591,23 @@
 .rich-editor .ck-content h3 { font-size: 1.3em; line-height: 1.35; margin: 0.9em 0 0.4em; }
 .rich-editor .ck-content h4 { font-size: 1.1em; margin: 0.9em 0 0.4em; }
 .rich-editor .ck-content p { margin: 0 0 0.9em; }
+.ck-content .image.image-style-full-width {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 1em 0;
+}
+
+.ck-content .image.image-style-full-width img {
+  width: 100%;
+}
+
+/* CKEditor lays captions out as table-caption, which collapses to one
+   letter per line once the figure is a block */
+.ck-content .image.image-style-full-width > figcaption {
+  display: block;
+}
+
 .rich-editor .ck-content blockquote { border-left: 4px solid #c4b5fd; color: #4b5563; }
 
 @media (max-width: 768px) {

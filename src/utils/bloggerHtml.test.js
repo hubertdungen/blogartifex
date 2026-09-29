@@ -36,3 +36,11 @@ test('is idempotent and keeps data URIs intact', () => {
   expect(toBloggerHtml(once)).toBe(once);
   expect(styleOf(once, 'p')).toContain('url(data:image/png;base64,AAAA)');
 });
+
+test('full-width images span the text column on Blogger', () => {
+  const out = toBloggerHtml('<figure class="image image-style-full-width"><img src="a.png"><figcaption>c</figcaption></figure>');
+  expect(styleOf(out, 'figure')).toMatch(/width:100%/);
+  expect(styleOf(out, 'figure')).toMatch(/display:block/);
+  expect(styleOf(out, 'img')).toMatch(/width:100%/);
+  expect(styleOf(out, 'figcaption')).toMatch(/display:block/);
+});

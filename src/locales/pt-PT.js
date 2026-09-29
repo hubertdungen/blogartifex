@@ -176,6 +176,7 @@ const translations = {
         openInNewTab: 'Abrir num novo separador'
       },
       image: {
+        fullWidth: 'Largura do texto',
         wrapText: 'Moldar texto',
         breakText: 'Quebrar texto',
         original: 'Tamanho original'
