@@ -92,3 +92,47 @@ export const shrinkEmbeddedImages = async (html) => {
 
 /** Approximate size in bytes of an HTML string as sent to Blogger. */
 export const byteSize = (text) => new Blob([text || '']).size;
+
+/**
+ * Uploads embedded images to the BlogArtifex server (POST /api/media) and
+ * swaps each data: URI for the returned public URL, so Blogger gets real
+ * image addresses: a featured image, a light post, and nothing for Blogger's
+ * own editor to re-upload. Images that fail to upload stay embedded.
+ * @param {string} html
+ * @param {string} token - Google access token (the server checks it)
+ * @returns {Promise<{ html: string, hosted: number, failed: number, unavailable: boolean }>}
+ */
+export const hostEmbeddedImages = async (html, token) => {
+  const result = { html, hosted: 0, failed: 0, unavailable: false };
+  if (!html || !html.includes('data:image/')) return result;
+
+  const root = new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html').body;
+  const uploaded = new Map(); // the same image twice is sent once
+
+  for (const image of root.querySelectorAll('img[src^="data:image/"]')) {
+    const src = image.getAttribute('src');
+    try {
+      if (!uploaded.has(src)) {
+        const blob = await (await fetch(src)).blob();
+        const response = await fetch('./api/media', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/octet-stream' },
+          body: blob
+        });
+        if (response.status === 404 || response.status === 405 || response.status === 501) {
+          result.unavailable = true; // no BlogArtifex server (e.g. portable copy)
+          break;
+        }
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        uploaded.set(src, (await response.json()).url);
+      }
+      image.setAttribute('src', uploaded.get(src));
+      result.hosted += 1;
+    } catch {
+      result.failed += 1;
+    }
+  }
+
+  if (result.hosted) result.html = root.innerHTML;
+  return result;
+};

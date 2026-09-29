@@ -169,6 +169,24 @@ const makeHeading = (doc, text, level, style) => {
 };
 
 /**
+ * <p><img></p> → <figure class="image"><img></figure> (in place).
+ * @param {HTMLElement} root
+ */
+export const liftImageParagraphs = (root) => {
+  root.querySelectorAll('p').forEach(paragraph => {
+    const images = paragraph.querySelectorAll('img');
+    if (images.length !== 1 || textOf(paragraph)) return;
+    const image = images[0];
+    const link = image.closest('a');
+    const figure = root.ownerDocument.createElement('figure');
+    figure.className = 'image';
+    figure.appendChild(link && paragraph.contains(link) ? link : image);
+    paragraph.replaceWith(figure);
+  });
+  return root;
+};
+
+/**
  * @param {string} html - editor HTML
  * @param {typeof DEFAULT_STYLE} style - from learnBlogStyle()
  * @param {{ extractTitle?: boolean }} [options] - take a leading document
@@ -191,6 +209,10 @@ export const formatLikeBlog = (html, style = DEFAULT_STYLE, { extractTitle = fal
       div.replaceWith(paragraph);
     }
   });
+
+  // 1b. A paragraph holding only an image (how Word and Blogger store
+  //     them) becomes a block image, so it can be positioned and resized.
+  liftImageParagraphs(root);
 
   // 2. Drop empty paragraphs (Word uses them as spacing).
   root.querySelectorAll('p').forEach(paragraph => {

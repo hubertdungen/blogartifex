@@ -15,8 +15,8 @@ import i18n, { t } from '../services/I18nService';
 import { getStoredJson, getStoredValue, setStoredValue } from '../utils/storage';
 import { ClassicEditor, buildEditorConfig } from '../utils/editorConfig';
 import { toBloggerHtml, fromBloggerHtml } from '../utils/bloggerHtml';
-import { shrinkEmbeddedImages, byteSize } from '../utils/webImages';
-import { learnBlogStyle, formatLikeBlog, describeBlogStyle, DEFAULT_STYLE } from '../utils/blogStyle';
+import { shrinkEmbeddedImages, hostEmbeddedImages, byteSize } from '../utils/webImages';
+import { learnBlogStyle, formatLikeBlog, describeBlogStyle, liftImageParagraphs, DEFAULT_STYLE } from '../utils/blogStyle';
 
 /**
  * Componente do Editor de Posts
@@ -600,11 +600,16 @@ function PostEditor({ theme, toggleTheme }) {
       // megabytes each and Blogger then refuses the post. The editor is
       // updated too, so this only happens once per image.
       const shrunk = await shrinkEmbeddedImages(postData.content);
-      if (shrunk.saved) {
-        if (editorRef.current) editorRef.current.setData(shrunk.html);
-        setPostData(prev => ({ ...prev, content: shrunk.html }));
+      // Then host them on the BlogArtifex server: Blogger needs real image
+      // URLs (featured image, light post, no re-upload by its own editor).
+      const hosted = await hostEmbeddedImages(shrunk.html, AuthService.getAuthToken());
+      const content = hosted.html;
+      if (shrunk.saved || hosted.hosted) {
+        if (editorRef.current) editorRef.current.setData(content);
+        setPostData(prev => ({ ...prev, content }));
       }
-      let finalContent = toBloggerHtml(shrunk.html);
+      const imagesNotHosted = hosted.failed > 0 || hosted.unavailable;
+      let finalContent = toBloggerHtml(content);
       
       if (metadata.description) {
         finalContent = insertMetadata(finalContent, 'description', metadata.description);
@@ -653,15 +658,14 @@ function PostEditor({ theme, toggleTheme }) {
         );
       }
 
-      setFeedback({
-        type: 'success',
-        message: publish && postData.scheduledPublish
-          ? t('editor.notifications.scheduled')
-          : publish
-            ? t('editor.notifications.published')
-            : t('editor.notifications.draftSaved'),
-        duration: 3000
-      });
+      const savedMessage = publish && postData.scheduledPublish
+        ? t('editor.notifications.scheduled')
+        : publish
+          ? t('editor.notifications.published')
+          : t('editor.notifications.draftSaved');
+      setFeedback(imagesNotHosted
+        ? { type: 'warning', message: `${savedMessage} ${t('editor.images.notHosted')}`, duration: 10000 }
+        : { type: 'success', message: savedMessage, duration: 3000 });
       
       // Limpar rascunho local após salvar
       const draftKey = `blogartifex_draft_${selectedBlog}_${postId || 'new'}`;
@@ -769,6 +773,7 @@ ${toBloggerHtml(postData.content)}
       || (doc.body.firstElementChild?.tagName === 'H1' ? doc.body.firstElementChild : null);
     const title = titleElement ? titleElement.textContent.trim() : '';
     if (titleElement) titleElement.remove();
+    liftImageParagraphs(doc.body); // images as blocks: positionable, text width…
 
     await applyImportedContent(title, doc.body.innerHTML);
     setFeedback({ type: 'success', message: t('editor.import.docxDone'), duration: 5000 });

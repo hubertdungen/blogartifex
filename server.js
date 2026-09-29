@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
 const { handleConvert } = require('./docConverter');
+const { handleUpload, serveMedia } = require('./mediaStore');
 
 const DEFAULT_PORT = 3000;
 const MAX_PORT_ATTEMPTS = 20;
@@ -55,6 +56,14 @@ const requestHandler = (req, res) => {
   // .doc/.rtf/.odt → .docx via LibreOffice (see docConverter.js)
   if (pathname === '/api/convert') {
     return handleConvert(req, res, url);
+  }
+
+  // Images for published posts (see mediaStore.js)
+  if (pathname === '/api/media') {
+    return handleUpload(req, res);
+  }
+  if (pathname.startsWith('/media/')) {
+    return serveMedia(req, res, pathname.slice('/media/'.length));
   }
 
   const relativePath = pathname === '/' ? 'index.html' : pathname.replace(/^[/\\]+/, '');

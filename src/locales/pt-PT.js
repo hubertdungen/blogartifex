@@ -195,6 +195,9 @@ const translations = {
         title: "Título definido: «{title}».",
         undo: "Ctrl+Z anula."
       },
+      images: {
+        notHosted: "Algumas imagens não foram enviadas para o servidor do BlogArtifex e ficam embutidas no artigo. O Blogger mostra-as, mas não servem de imagem de destaque e o editor do Blogger volta a carregá-las."
+      },
       import: {
         converting: "A converter o documento…",
         convert: {
