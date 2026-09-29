@@ -7,7 +7,7 @@ import BloggerService from '../services/BloggerService';
 // Importar o serviço de internacionalização
 import i18n, { LOCALES, t } from '../services/I18nService';
 import { getStoredJson } from '../utils/storage';
-import AIService, { AI_PROVIDERS, getAISettings, saveAISettings } from '../services/AIService';
+import AIService, { AI_PROVIDERS, getAISettings, saveAISettings, getCachedModels, modelListIsStale, refreshModels } from '../services/AIService';
 
 /**
  * Componente Settings - Configurações da aplicação
@@ -42,6 +42,9 @@ function Settings({ theme, toggleTheme }) {
   // Definições do assistente de IA
   const [aiSettings, setAISettings] = useState(getAISettings());
   const [showApiKey, setShowApiKey] = useState(false);
+  // Live model list of the selected AI provider (see refreshModels)
+  const [modelInfo, setModelInfo] = useState({});
+  const [modelsState, setModelsState] = useState({ status: 'idle', message: '' });
   const [aiTestState, setAITestState] = useState({ status: 'idle', message: '' });
 
   // Carregar configurações e dados ao montar o componente
@@ -135,6 +138,30 @@ function Settings({ theme, toggleTheme }) {
   /**
    * Atualiza uma definição do assistente de IA
    */
+  const currentAIKey = (aiSettings.apiKeys[aiSettings.provider] || '').trim();
+
+  const loadModels = async (provider, key) => {
+    setModelsState({ status: 'loading', message: '' });
+    try {
+      setModelInfo(await refreshModels(provider, key));
+      setModelsState({ status: 'idle', message: '' });
+    } catch (error) {
+      setModelsState({ status: 'error', message: error.message });
+    }
+  };
+
+  // Show the cached list at once; refresh it when older than a day and a
+  // key is there (OpenRouter's list is public and needs none).
+  useEffect(() => {
+    const provider = aiSettings.provider;
+    setModelInfo(getCachedModels(provider));
+    setModelsState({ status: 'idle', message: '' });
+    if (!modelListIsStale(provider) || (!currentAIKey && provider !== 'openrouter')) return undefined;
+    const timer = setTimeout(() => loadModels(provider, currentAIKey), 800);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aiSettings.provider, currentAIKey]);
+
   const handleAIChange = (field, value) => {
     setAITestState({ status: 'idle', message: '' });
     setAISettings(prev => {
@@ -513,18 +540,46 @@ function Settings({ theme, toggleTheme }) {
 
                   <div className="setting-item">
                     <label htmlFor="aiModel">{t('ai.settings.model')}</label>
-                    <select
-                      id="aiModel"
-                      value={aiSettings.models[aiSettings.provider] || ''}
-                      onChange={(e) => handleAIChange('model', e.target.value)}
-                    >
-                      <option value="">
-                        {t('ai.settings.defaultModel', { model: AI_PROVIDERS[aiSettings.provider].defaultModel })}
-                      </option>
-                      {AI_PROVIDERS[aiSettings.provider].models.map(model => (
-                        <option key={model} value={model}>{model}</option>
-                      ))}
-                    </select>
+                    <div className="ai-model-row">
+                      <select
+                        id="aiModel"
+                        value={aiSettings.models[aiSettings.provider] || ''}
+                        onChange={(e) => handleAIChange('model', e.target.value)}
+                      >
+                        <option value="">
+                          {t('ai.settings.autoModel', { model: modelInfo.auto || AI_PROVIDERS[aiSettings.provider].defaultModel })}
+                        </option>
+                        {(() => {
+                          const live = modelInfo.models && modelInfo.models.length
+                            ? modelInfo.models
+                            : AI_PROVIDERS[aiSettings.provider].models.map(id => ({ id }));
+                          const chosen = aiSettings.models[aiSettings.provider];
+                          const list = live.slice(0, 200);
+                          if (chosen && !list.some(model => model.id === chosen)) list.unshift({ id: chosen });
+                          return list.map(model => (
+                            <option key={model.id} value={model.id}>
+                              {model.free ? `${model.id} — ${t('ai.settings.free')}` : model.id}
+                            </option>
+                          ));
+                        })()}
+                      </select>
+                      <button
+                        type="button"
+                        className="ai-models-refresh"
+                        disabled={modelsState.status === 'loading' || (!currentAIKey && aiSettings.provider !== 'openrouter')}
+                        onClick={() => loadModels(aiSettings.provider, currentAIKey)}
+                        title={t('ai.settings.refreshModels')}
+                      >
+                        {modelsState.status === 'loading' ? '…' : '↻'}
+                      </button>
+                    </div>
+                    <p className="setting-description">
+                      {modelsState.status === 'error'
+                        ? t('ai.settings.modelsError', { message: modelsState.message })
+                        : modelInfo.at
+                          ? t('ai.settings.modelsUpdated', { date: new Date(modelInfo.at).toLocaleString(i18n.getLocale()) })
+                          : t('ai.settings.modelsNeedKey')}
+                    </p>
                     <p className="setting-description">{t('ai.settings.modelDesc')}</p>
                   </div>
 
