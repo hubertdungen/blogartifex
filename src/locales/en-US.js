@@ -167,6 +167,7 @@ const translations = {
         enterTitle: 'Please enter a title for the post.',
         loadBlogs: 'Unable to load your blogs. Please check your connection and try again.',
         loadPost: 'Unable to load the post. Please check your connection and try again.',
+        postTooLarge: "Blogger refused the post: it is {size} MB, almost all of it images embedded in the text. Remove or shrink some images, or insert them from a web address (Insert image → via URL).",
         importBinary: 'This file is in a binary format (old .doc). In Word, save it as .docx and import that file — or copy the text and paste it into the editor.'
       },
       draft: {

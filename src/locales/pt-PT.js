@@ -167,6 +167,7 @@ const translations = {
         enterTitle: 'Por favor, insira um título para o artigo.',
         loadBlogs: 'Não foi possível carregar os seus blogues. Por favor, verifique a sua ligação e tente novamente.',
         loadPost: 'Não foi possível carregar o artigo. Por favor, verifique a sua ligação e tente novamente.',
+        postTooLarge: "O Blogger recusou o artigo: tem {size} MB, quase tudo imagens embutidas no texto. Retire ou reduza algumas imagens, ou insira-as a partir de um endereço web (Inserir imagem → através de URL).",
         importBinary: 'Este ficheiro está num formato binário (.doc antigo). No Word, guarde-o como .docx e importe esse ficheiro — ou copie o texto e cole-o no editor.'
       },
       draft: {

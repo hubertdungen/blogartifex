@@ -15,6 +15,7 @@ import i18n, { t } from '../services/I18nService';
 import { getStoredJson, getStoredValue, setStoredValue } from '../utils/storage';
 import { ClassicEditor, buildEditorConfig } from '../utils/editorConfig';
 import { toBloggerHtml, fromBloggerHtml } from '../utils/bloggerHtml';
+import { shrinkEmbeddedImages, byteSize } from '../utils/webImages';
 
 /**
  * Componente do Editor de Posts
@@ -588,12 +589,21 @@ function PostEditor({ theme, toggleTheme }) {
       return;
     }
     
+    let payloadSize = 0;
     try {
       setSaving(true);
       
       // Adicionar metadados ao conteúdo
       // Inline the layout styles Blogger themes don't have
-      let finalContent = toBloggerHtml(postData.content);
+      // Web-size embedded images first: imported or pasted photos can be
+      // megabytes each and Blogger then refuses the post. The editor is
+      // updated too, so this only happens once per image.
+      const shrunk = await shrinkEmbeddedImages(postData.content);
+      if (shrunk.saved) {
+        if (editorRef.current) editorRef.current.setData(shrunk.html);
+        setPostData(prev => ({ ...prev, content: shrunk.html }));
+      }
+      let finalContent = toBloggerHtml(shrunk.html);
       
       if (metadata.description) {
         finalContent = insertMetadata(finalContent, 'description', metadata.description);
@@ -607,6 +617,8 @@ function PostEditor({ theme, toggleTheme }) {
         finalContent = insertMetadata(finalContent, 'keywords', metadata.keywords);
       }
       
+      payloadSize = byteSize(finalContent);
+
       const postPayload = {
         kind: 'blogger#post',
         title: postData.title,
@@ -672,9 +684,14 @@ function PostEditor({ theme, toggleTheme }) {
         return;
       }
       
+      // Blogger answers a generic 400 when a post is too big — almost always
+      // images embedded in the HTML. Say that instead of "invalid argument".
+      const tooLarge = /invalid argument/i.test(error.message) && payloadSize > 512 * 1024;
       setFeedback({
         type: 'error',
-        message: t('editor.notifications.error', { message: error.message })
+        message: tooLarge
+          ? t('editor.errors.postTooLarge', { size: (payloadSize / 1048576).toFixed(1) })
+          : t('editor.notifications.error', { message: error.message })
       });
     }
     setSaving(false);
@@ -721,7 +738,9 @@ ${toBloggerHtml(postData.content)}
   /**
    * Importar arquivo (TXT, DOC, DOCX, HTML)
    */
-  const applyImportedContent = (title, content) => {
+  const applyImportedContent = async (title, rawContent) => {
+    // Word documents carry full-resolution photos; bring them to web size now
+    const { html: content } = await shrinkEmbeddedImages(rawContent);
     setPostData(prev => ({
       ...prev,
       title: title || prev.title,
@@ -750,7 +769,7 @@ ${toBloggerHtml(postData.content)}
     const title = titleElement ? titleElement.textContent.trim() : '';
     if (titleElement) titleElement.remove();
 
-    applyImportedContent(title, doc.body.innerHTML);
+    await applyImportedContent(title, doc.body.innerHTML);
     setFeedback({ type: 'success', message: t('editor.import.docxDone'), duration: 5000 });
   };
 
@@ -802,7 +821,7 @@ ${toBloggerHtml(postData.content)}
         // TXT: first line is the title, the rest one paragraph per line
         const escape = text => text.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
         const lines = fileContent.split('\n');
-        applyImportedContent(
+        await applyImportedContent(
           lines[0] || '',
           lines.slice(1).map(line => (line.trim() ? `<p>${escape(line)}</p>` : '')).join('')
         );
@@ -812,7 +831,7 @@ ${toBloggerHtml(postData.content)}
       // HTML (including Word's "Web Page" export)
       const doc = new DOMParser().parseFromString(fileContent, 'text/html');
       const titleElement = doc.querySelector('title') || doc.querySelector('h1');
-      applyImportedContent(
+      await applyImportedContent(
         titleElement ? titleElement.textContent.trim() : '',
         doc.body ? doc.body.innerHTML : fileContent
       );
