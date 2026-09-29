@@ -88,6 +88,12 @@ ativa.
 
 ## ✨ Novidades
 
+- **Editor pensado para o Word** (CKEditor 48, só funcionalidades
+  open-source): cole diretamente do Word e mantenha tipos de letra,
+  tamanhos, cores, alinhamento, listas, tabelas e imagens; importe ficheiros
+  `.docx`; posicione imagens com texto à volta, redimensione-as e ponha
+  legendas; propriedades de tabelas e células. O que compõe no editor é o que
+  o Blogger mostra — os estilos de layout vão inline ao publicar.
 - **Renomeado para BlogArtifex** com um novo logótipo vetorial coerente (uma
   ponta de caneta roxo→ciano que se dissolve em píxeis), usado de forma
   consistente no ícone da app, favicon e ícones Android.
@@ -97,10 +103,10 @@ ativa.
   ações rápidas ou um menu flutuante sobre o texto selecionado. Escolha um tom
   de escrita nas Definições; o assistente também pode reutilizar os seus
   modelos guardados.
-- **Formatação de imagens**: ao selecionar uma imagem surge uma barra
-  flutuante mesmo por cima dela com tamanhos predefinidos e modos de ajuste
-  (conter, cobrir, esticar), além de pegas nos cantos para redimensionar a
-  imagem à mão (estilo Illustrator); a IA também pode controlar tamanho/posição.
+- **Formatação de imagens**: selecione uma imagem para a posicionar (texto à
+  volta à esquerda/direita, lateral, centrada, em linha), redimensioná-la
+  pelas pegas dos cantos ou para 25–100% e pôr-lhe legenda; a IA também pode
+  controlar tamanho/posição.
 - Corrigido um bug crítico de migração de armazenamento que terminava a sessão
   e apagava os dados locais em cada carregamento; rebrand concluído em toda a app.
 - Correções na edição de texto: upload de imagens funcional (incorporadas em

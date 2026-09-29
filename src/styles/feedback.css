@@ -118,6 +118,24 @@
     color: #3498db;
   }
   
+  .feedback-warning {
+    background-color: rgba(245, 158, 11, 0.1);
+    border-color: rgba(245, 158, 11, 0.35);
+  }
+
+  .dark .feedback-warning {
+    background-color: rgba(245, 158, 11, 0.18);
+    border-color: rgba(245, 158, 11, 0.45);
+  }
+
+  .light .feedback-warning .feedback-message {
+    color: #b45309;
+  }
+
+  .dark .feedback-warning .feedback-message {
+    color: #fbbf24;
+  }
+
   /* Animações */
   @keyframes feedbackFadeIn {
     from { opacity: 0; transform: translateY(-10px); }
@@ -132,13 +150,25 @@
   /* Feedback fixo no topo da aplicação */
   .feedback-fixed {
     position: fixed;
-    top: 20px;
+    top: calc(16px + env(safe-area-inset-top, 0px));
     left: 50%;
     transform: translateX(-50%);
     z-index: 1000;
-    min-width: 300px;
-    max-width: 90%;
+    width: max-content;
+    min-width: min(300px, calc(100vw - 32px));
+    max-width: min(640px, calc(100vw - 32px));
+    margin: 0;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.25);
+    animation: none;
   }
+
+  /* Floating over the page: solid card, the type shows in the border */
+  .light .feedback-fixed { background-color: #fff; }
+  .dark .feedback-fixed { background-color: var(--card-dark); }
+  .feedback-fixed.feedback-error { border-left: 4px solid #e74c3c; }
+  .feedback-fixed.feedback-success { border-left: 4px solid #2ecc71; }
+  .feedback-fixed.feedback-info { border-left: 4px solid #3498db; }
+  .feedback-fixed.feedback-warning { border-left: 4px solid #f59e0b; }
   
   /* Responsividade */
   @media (max-width: 768px) {

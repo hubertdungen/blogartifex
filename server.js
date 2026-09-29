@@ -2,6 +2,7 @@ const http = require('http');
 const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
+const { handleConvert } = require('./docConverter');
 
 const DEFAULT_PORT = 3000;
 const MAX_PORT_ATTEMPTS = 20;
@@ -42,11 +43,18 @@ const sendFile = (res, filePath) => {
 
 const requestHandler = (req, res) => {
   let pathname;
+  let url;
   try {
-    pathname = decodeURIComponent(new URL(req.url, `http://${req.headers.host || 'localhost'}`).pathname);
+    url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+    pathname = decodeURIComponent(url.pathname);
   } catch (error) {
     res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' });
     return res.end('Bad Request');
+  }
+
+  // .doc/.rtf/.odt → .docx via LibreOffice (see docConverter.js)
+  if (pathname === '/api/convert') {
+    return handleConvert(req, res, url);
   }
 
   const relativePath = pathname === '/' ? 'index.html' : pathname.replace(/^[/\\]+/, '');

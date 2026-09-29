@@ -111,6 +111,7 @@ const translations = {
     editor: {
       title: 'Editor de Artigo',
       placeholders: {
+        content: 'Escreva aqui, ou cole diretamente do Word…',
         title: 'Título do artigo',
         tags: 'Exemplo: tecnologia, tutorial, dicas'
       },
@@ -166,25 +167,46 @@ const translations = {
         enterTitle: 'Por favor, insira um título para o artigo.',
         loadBlogs: 'Não foi possível carregar os seus blogues. Por favor, verifique a sua ligação e tente novamente.',
         loadPost: 'Não foi possível carregar o artigo. Por favor, verifique a sua ligação e tente novamente.',
-        importBinary: 'Este ficheiro Word está num formato binário que não pode ser importado diretamente. No Word, guarde o documento como "Página Web (.html)" ou texto simples e importe esse ficheiro.'
+        postTooLarge: "O Blogger recusou o artigo: tem {size} MB, quase tudo imagens embutidas no texto. Retire ou reduza algumas imagens, ou insira-as a partir de um endereço web (Inserir imagem → através de URL).",
+        importBinary: 'Este ficheiro está num formato binário (.doc antigo). No Word, guarde-o como .docx e importe esse ficheiro — ou copie o texto e cole-o no editor.'
       },
       draft: {
         restoreConfirm: 'Foi encontrado um rascunho guardado automaticamente em {time}. Deseja restaurá-lo?'
       },
-      imageFormat: {
-        title: 'Propriedades da Imagem',
-        standard: 'Tamanho Padrão',
-        fit: 'Ajustar Dentro (Conter)',
-        fill: 'Preencher Área (Cobrir)',
-        stretch: 'Esticar'
+      link: {
+        openInNewTab: 'Abrir num novo separador'
       },
-      imageSize: {
-        label: 'Tamanho',
-        original: 'Original',
-        small: 'Pequeno',
-        medium: 'Médio',
-        large: 'Grande',
-        full: 'Total'
+      image: {
+        fullWidth: 'Largura do texto',
+        wrapText: 'Moldar texto',
+        breakText: 'Quebrar texto',
+        original: 'Tamanho original'
+      },
+      codeBlock: {
+        plain: 'Texto simples'
+      },
+      format: {
+        button: "✨ Formatar como o blogue",
+        learning: "A aprender o estilo do blogue…",
+        empty: "Escreva ou importe primeiro um artigo.",
+        done: "Formatado: {sections} secção(ões), {subsections} subsecção(ões), {lists} lista(s); {detected} título(s) detetado(s) em linhas a negrito ou maiores; {removed} linha(s) vazia(s) removida(s).",
+        learnt: "Estilo aprendido nos seus últimos {count} artigos.",
+        defaults: "Ainda não há artigos publicados para aprender, por isso foi usado o estilo padrão.",
+        title: "Título definido: «{title}».",
+        undo: "Ctrl+Z anula."
+      },
+      import: {
+        converting: "A converter o documento…",
+        convert: {
+          auth: "A sessão expirou. Inicie sessão de novo para importar este ficheiro.",
+          tooLarge: "O ficheiro tem mais de 20 MB.",
+          busy: "Está outro documento a ser convertido. Tente de novo daqui a uns segundos.",
+          unavailable: "Esta instalação não converte ficheiros .doc/.rtf/.odt (falta o LibreOffice). No Word, guarde-o como .docx e importe esse ficheiro.",
+          failed: "Não foi possível converter o documento ({message}). No Word, guarde-o como .docx e importe esse ficheiro."
+        },
+        docxDone: "Documento importado. Carregue em «Formatar como o blogue» para lhe dar o estilo dos seus artigos.",
+        localImages: "Não foi possível colar {count} imagem(ns) do Word (o Word para Mac, o Word Online e o Outlook não as partilham). Insira-as com o botão de imagem.",
+        failed: 'Não foi possível importar o ficheiro: {message}'
       },
       stats: {
         words: '{count} palavras',
@@ -206,6 +228,7 @@ const translations = {
         error: 'Erro de IA: {message}'
       },
       quickActions: {
+        blogFormat: 'Formatar para o blogue',
         improve: 'Melhorar escrita',
         grammar: 'Corrigir gramática',
         continue: 'Continuar a escrever',
@@ -214,6 +237,7 @@ const translations = {
         images: 'Sugerir imagens'
       },
       quickPrompts: {
+        blogFormat: "Reformata o artigo inteiro para este blogue sem mudar o sentido nem deixar nada de fora. Identifica a estrutura — título, secções, subsecções, texto, listas, citações, tabelas e imagens — e aplica o estilo da casa: {style} Corrige a estrutura só onde for preciso: divide blocos de texto enormes em parágrafos, transforma em títulos as linhas que fazem de título, transforma enumerações em listas, mantém todas as imagens com as legendas. Mantém o idioma. Devolve o resultado como replace_document e sugere na resposta um título e 3 a 5 etiquetas (de preferência etiquetas que o blogue já usa).",
         improve: 'Melhora a escrita de todo o artigo: torna-o mais claro e cativante mantendo o significado, a estrutura, o idioma e as imagens.',
         grammar: 'Corrige todos os erros de gramática, ortografia e pontuação do artigo sem alterar o estilo, a estrutura ou o idioma.',
         continue: 'Continua a escrever o artigo a partir do ponto onde termina, mantendo o mesmo tom, idioma e formatação. Adiciona um ou dois parágrafos novos.',

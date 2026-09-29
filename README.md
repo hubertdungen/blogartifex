@@ -26,6 +26,12 @@ donation button below.
 
 ## 🆕 What's New
 
+- **Word-friendly editor** (CKEditor 48, open-source features only): paste
+  straight from Word and keep fonts, sizes, colours, alignment, lists,
+  tables and images; import `.docx` files; position images with text
+  wrapping, resize them and add captions; table and cell properties. What
+  you lay out in the editor is what Blogger shows — layout styles are
+  inlined on publish.
 - **Rebranded to BlogArtifex** with a new, coherent vector logo (a
   purple→cyan pen nib dissolving into pixels) used consistently across the
   app icon, favicon and Android launcher icons.
@@ -34,10 +40,9 @@ donation button below.
   illustrate posts directly inside the editor — via chat, quick-action
   buttons, or a floating menu over selected text. Pick a writing tone in
   Settings, and the assistant can reuse your saved templates.
-- **Image formatting**: select an image and a floating toolbar appears right
-  above it with size presets and fit modes (contain, cover, stretch), plus
-  corner handles to resize the image by hand (Illustrator-style); the AI can
-  control image size/position too.
+- **Image formatting**: select an image to position it (wrap text left/right,
+  side, centred, inline), resize it from the corner handles or to 25–100%,
+  and add a caption; the AI can control image size/position too.
 - Fixed a critical storage-migration bug that logged users out and wiped
   local data on every load; completed the rebrand across the whole app.
 - Text-editing fixes: working image upload (embedded as base64), image

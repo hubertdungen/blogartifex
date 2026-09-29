@@ -111,6 +111,7 @@ const translations = {
     editor: {
       title: 'Post Editor',
       placeholders: {
+        content: 'Write here, or paste straight from Word…',
         title: 'Post title',
         tags: 'Example: technology, tutorial, tips'
       },
@@ -166,25 +167,46 @@ const translations = {
         enterTitle: 'Please enter a title for the post.',
         loadBlogs: 'Unable to load your blogs. Please check your connection and try again.',
         loadPost: 'Unable to load the post. Please check your connection and try again.',
-        importBinary: 'This Word file is in a binary format that cannot be imported directly. In Word, save the document as "Web Page (.html)" or plain text and import that file.'
+        postTooLarge: "Blogger refused the post: it is {size} MB, almost all of it images embedded in the text. Remove or shrink some images, or insert them from a web address (Insert image → via URL).",
+        importBinary: 'This file is in a binary format (old .doc). In Word, save it as .docx and import that file — or copy the text and paste it into the editor.'
       },
       draft: {
         restoreConfirm: 'An auto-saved draft from {time} was found. Do you want to restore it?'
       },
-      imageFormat: {
-        title: 'Image Properties',
-        standard: 'Standard Size',
-        fit: 'Inside Fit (Contain)',
-        fill: 'Fill Area (Cover)',
-        stretch: 'Stretch'
+      link: {
+        openInNewTab: 'Open in a new tab'
       },
-      imageSize: {
-        label: 'Size',
-        original: 'Original',
-        small: 'Small',
-        medium: 'Medium',
-        large: 'Large',
-        full: 'Full'
+      image: {
+        fullWidth: 'Full text width',
+        wrapText: 'Wrap text',
+        breakText: 'Break text',
+        original: 'Original size'
+      },
+      codeBlock: {
+        plain: 'Plain text'
+      },
+      format: {
+        button: "✨ Format like my blog",
+        learning: "Learning your blog's style…",
+        empty: "Write or import an article first.",
+        done: "Formatted: {sections} section(s), {subsections} subsection(s), {lists} list(s); {detected} heading(s) detected from bold or larger lines; {removed} empty line(s) removed.",
+        learnt: "Style learnt from your last {count} posts.",
+        defaults: "No published posts to learn from yet, so the standard style was used.",
+        title: "Title set to “{title}”.",
+        undo: "Ctrl+Z undoes it."
+      },
+      import: {
+        converting: "Converting the document…",
+        convert: {
+          auth: "Your session has expired. Sign in again to import this file.",
+          tooLarge: "The file is larger than 20 MB.",
+          busy: "Another document is being converted. Try again in a few seconds.",
+          unavailable: "This installation can't convert .doc/.rtf/.odt files (LibreOffice isn't available). In Word, save it as .docx and import that file.",
+          failed: "Could not convert the document ({message}). In Word, save it as .docx and import that file."
+        },
+        docxDone: "Document imported. Press “Format like my blog” to give it the style of your posts.",
+        localImages: "{count} image(s) from Word could not be pasted (Word for Mac, Word Online and Outlook don't share them). Insert them with the image button.",
+        failed: 'Could not import the file: {message}'
       },
       stats: {
         words: '{count} words',
@@ -206,6 +228,7 @@ const translations = {
         error: 'AI error: {message}'
       },
       quickActions: {
+        blogFormat: 'Format for the blog',
         improve: 'Improve writing',
         grammar: 'Fix grammar',
         continue: 'Continue writing',
@@ -214,6 +237,7 @@ const translations = {
         images: 'Suggest images'
       },
       quickPrompts: {
+        blogFormat: "Reformat the whole article for this blog without changing its meaning or leaving anything out. Work out its structure — title, sections, subsections, body text, lists, quotes, tables and images — and apply the blog's house style: {style} Fix structure only where needed: split walls of text into paragraphs, turn lines that act as titles into headings, turn enumerations into lists, keep every image with its caption. Keep the language. Return the result as replace_document, and suggest a title and 3–5 labels (prefer labels the blog already uses) in your reply.",
         improve: 'Improve the writing of the whole article: make it clearer and more engaging while keeping the meaning, structure, language and images.',
         grammar: 'Fix all grammar, spelling and punctuation mistakes in the article without changing its style, structure or language.',
         continue: 'Continue writing the article from where it ends, keeping the same tone, language and formatting. Add one or two new paragraphs.',

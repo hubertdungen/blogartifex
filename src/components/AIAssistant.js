@@ -12,7 +12,7 @@ import { getStoredJson } from '../utils/storage';
  * applies directly to the article: rewrite the document, insert HTML,
  * replace the current selection, change the title, insert/resize images.
  */
-function AIAssistant({ getTitle, getContent, getSelectionHtml, applyAction, onClose }) {
+function AIAssistant({ getTitle, getContent, getSelectionHtml, getBlogStyleHint, applyAction, onClose }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
@@ -37,6 +37,7 @@ function AIAssistant({ getTitle, getContent, getSelectionHtml, applyAction, onCl
   }, [messages, busy]);
 
   const quickActions = [
+    { id: 'blogFormat', dynamic: true },
     { id: 'improve', prompt: t('ai.quickPrompts.improve') },
     { id: 'grammar', prompt: t('ai.quickPrompts.grammar') },
     { id: 'continue', prompt: t('ai.quickPrompts.continue') },
@@ -45,11 +46,12 @@ function AIAssistant({ getTitle, getContent, getSelectionHtml, applyAction, onCl
     { id: 'images', prompt: t('ai.quickPrompts.images') }
   ];
 
-  const send = async (userMessage) => {
+  // displayText: what the chat shows when the prompt itself is long/technical
+  const send = async (userMessage, displayText) => {
     const text = (userMessage || '').trim();
     if (!text || busy) return;
 
-    const nextMessages = [...messages, { role: 'user', content: text }];
+    const nextMessages = [...messages, { role: 'user', content: text, display: displayText }];
     setMessages(nextMessages);
     setInput('');
     setBusy(true);
@@ -145,7 +147,7 @@ function AIAssistant({ getTitle, getContent, getSelectionHtml, applyAction, onCl
                 {message.error ? (
                   <span>{t('ai.chat.error', { message: message.error })}</span>
                 ) : (
-                  <span>{message.content}</span>
+                  <span>{message.display || message.content}</span>
                 )}
                 {message.applied > 0 && (
                   <span className="ai-applied-badge">
@@ -170,7 +172,12 @@ function AIAssistant({ getTitle, getContent, getSelectionHtml, applyAction, onCl
                 type="button"
                 className="ai-quick-button"
                 disabled={busy}
-                onClick={() => send(action.prompt)}
+                onClick={async () => (action.dynamic
+                  ? send(
+                    t(`ai.quickPrompts.${action.id}`, { style: getBlogStyleHint ? await getBlogStyleHint() : '' }),
+                    t(`ai.quickActions.${action.id}`)
+                  )
+                  : send(action.prompt))}
               >
                 {t(`ai.quickActions.${action.id}`)}
               </button>
