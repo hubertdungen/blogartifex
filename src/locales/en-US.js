@@ -195,6 +195,9 @@ const translations = {
         title: "Title set to “{title}”.",
         undo: "Ctrl+Z undoes it."
       },
+      images: {
+        notHosted: "Some images could not be sent to the BlogArtifex server and stay embedded in the post. Blogger will show them, but they won't be the featured image and its own editor will re-upload them."
+      },
       import: {
         converting: "Converting the document…",
         convert: {

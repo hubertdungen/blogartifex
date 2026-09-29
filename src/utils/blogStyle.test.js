@@ -56,3 +56,9 @@ test('takes the document title out of the body when asked', () => {
   expect(formatLikeBlog('<h1>Só um</h1><h2>A</h2><p>x</p>', DEFAULT_STYLE, { extractTitle: true }).title).toBe('Só um');
   expect(formatLikeBlog(big, DEFAULT_STYLE).title).toBe('');
 });
+
+test('a paragraph with only an image becomes a block image', () => {
+  const { html } = formatLikeBlog('<p><img src="a.png"></p><p>texto <img src="b.png"> em linha</p>', { ...DEFAULT_STYLE, fullWidthImages: true });
+  expect(html).toMatch(/^<figure class="image image-style-full-width"><img src="a.png"><\/figure>/);
+  expect(html).toMatch(/<p>texto <img src="b.png"> em linha<\/p>/);
+});
