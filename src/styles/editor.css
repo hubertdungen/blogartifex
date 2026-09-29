@@ -591,6 +591,8 @@
 .rich-editor .ck-content h3 { font-size: 1.3em; line-height: 1.35; margin: 0.9em 0 0.4em; }
 .rich-editor .ck-content h4 { font-size: 1.1em; margin: 0.9em 0 0.4em; }
 .rich-editor .ck-content p { margin: 0 0 0.9em; }
+.rich-editor .ck-content ul,
+.rich-editor .ck-content ol { margin: 0 0 0.9em; }
 .ck-content .image.image-style-full-width {
   display: block;
   width: 100%;
@@ -619,4 +621,16 @@
     min-height: 420px;
     padding: 20px 18px;
   }
+}
+
+/* "Format like my blog": the main action of the row */
+.editor-content .post-options .post-toolbar-buttons .format-blog-button {
+  background: linear-gradient(135deg, #7c3aed, #2563eb);
+  border-color: transparent;
+  color: #fff;
+}
+
+.editor-content .post-options .post-toolbar-buttons .format-blog-button:hover {
+  filter: brightness(1.1);
+  background: linear-gradient(135deg, #7c3aed, #2563eb);
 }

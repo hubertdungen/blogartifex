@@ -185,6 +185,16 @@ const translations = {
       codeBlock: {
         plain: 'Texto simples'
       },
+      format: {
+        button: "✨ Formatar como o blogue",
+        learning: "A aprender o estilo do blogue…",
+        empty: "Escreva ou importe primeiro um artigo.",
+        done: "Formatado: {sections} secção(ões), {subsections} subsecção(ões), {lists} lista(s); {detected} título(s) detetado(s) em linhas a negrito ou maiores; {removed} linha(s) vazia(s) removida(s).",
+        learnt: "Estilo aprendido nos seus últimos {count} artigos.",
+        defaults: "Ainda não há artigos publicados para aprender, por isso foi usado o estilo padrão.",
+        title: "Título definido: «{title}».",
+        undo: "Ctrl+Z anula."
+      },
       import: {
         converting: "A converter o documento…",
         convert: {
@@ -194,7 +204,7 @@ const translations = {
           unavailable: "Esta instalação não converte ficheiros .doc/.rtf/.odt (falta o LibreOffice). No Word, guarde-o como .docx e importe esse ficheiro.",
           failed: "Não foi possível converter o documento ({message}). No Word, guarde-o como .docx e importe esse ficheiro."
         },
-        docxDone: "Documento importado. Dica: copiar e colar a partir do Word também mantém tipos de letra, cores e alinhamento.",
+        docxDone: "Documento importado. Carregue em «Formatar como o blogue» para lhe dar o estilo dos seus artigos.",
         localImages: "Não foi possível colar {count} imagem(ns) do Word (o Word para Mac, o Word Online e o Outlook não as partilham). Insira-as com o botão de imagem.",
         failed: 'Não foi possível importar o ficheiro: {message}'
       },
@@ -218,6 +228,7 @@ const translations = {
         error: 'Erro de IA: {message}'
       },
       quickActions: {
+        blogFormat: 'Formatar para o blogue',
         improve: 'Melhorar escrita',
         grammar: 'Corrigir gramática',
         continue: 'Continuar a escrever',
@@ -226,6 +237,7 @@ const translations = {
         images: 'Sugerir imagens'
       },
       quickPrompts: {
+        blogFormat: "Reformata o artigo inteiro para este blogue sem mudar o sentido nem deixar nada de fora. Identifica a estrutura — título, secções, subsecções, texto, listas, citações, tabelas e imagens — e aplica o estilo da casa: {style} Corrige a estrutura só onde for preciso: divide blocos de texto enormes em parágrafos, transforma em títulos as linhas que fazem de título, transforma enumerações em listas, mantém todas as imagens com as legendas. Mantém o idioma. Devolve o resultado como replace_document e sugere na resposta um título e 3 a 5 etiquetas (de preferência etiquetas que o blogue já usa).",
         improve: 'Melhora a escrita de todo o artigo: torna-o mais claro e cativante mantendo o significado, a estrutura, o idioma e as imagens.',
         grammar: 'Corrige todos os erros de gramática, ortografia e pontuação do artigo sem alterar o estilo, a estrutura ou o idioma.',
         continue: 'Continua a escrever o artigo a partir do ponto onde termina, mantendo o mesmo tom, idioma e formatação. Adiciona um ou dois parágrafos novos.',

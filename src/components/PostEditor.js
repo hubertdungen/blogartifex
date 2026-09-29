@@ -16,6 +16,7 @@ import { getStoredJson, getStoredValue, setStoredValue } from '../utils/storage'
 import { ClassicEditor, buildEditorConfig } from '../utils/editorConfig';
 import { toBloggerHtml, fromBloggerHtml } from '../utils/bloggerHtml';
 import { shrinkEmbeddedImages, byteSize } from '../utils/webImages';
+import { learnBlogStyle, formatLikeBlog, describeBlogStyle, DEFAULT_STYLE } from '../utils/blogStyle';
 
 /**
  * Componente do Editor de Posts
@@ -773,6 +774,73 @@ ${toBloggerHtml(postData.content)}
     setFeedback({ type: 'success', message: t('editor.import.docxDone'), duration: 5000 });
   };
 
+  // House style learnt from the blog's recent posts, per blog
+  const blogStyleCache = useRef({});
+
+  const getBlogStyle = async () => {
+    const cached = blogStyleCache.current[selectedBlog];
+    if (cached) return cached;
+
+    let learnt = { style: { ...DEFAULT_STYLE }, labels: [] };
+    try {
+      const data = await BloggerService.getPosts(selectedBlog, {
+        status: 'live',
+        maxResults: 8,
+        fetchBodies: true,
+        fields: 'items(content,labels)'
+      });
+      const items = data.items || [];
+      const labelCounts = {};
+      items.forEach(item => (item.labels || []).forEach(label => { labelCounts[label] = (labelCounts[label] || 0) + 1; }));
+      learnt = {
+        style: learnBlogStyle(items.map(item => fromBloggerHtml(item.content || ''))),
+        labels: Object.keys(labelCounts).sort((a, b) => labelCounts[b] - labelCounts[a])
+      };
+    } catch (error) {
+      console.warn('Could not learn the blog style, using defaults', error);
+    }
+    blogStyleCache.current[selectedBlog] = learnt;
+    return learnt;
+  };
+
+  const handleFormatLikeBlog = async () => {
+    const editor = editorRef.current;
+    if (!editor || !editor.getData().trim()) {
+      setFeedback({ type: 'info', message: t('editor.format.empty'), duration: 4000 });
+      return;
+    }
+
+    setFeedback({ type: 'loading', message: t('editor.format.learning') });
+    const { style } = await getBlogStyle();
+    // An empty title field takes the document's own title line
+    const { html, title, stats } = formatLikeBlog(editor.getData(), style, { extractTitle: !postData.title.trim() });
+    if (title) setPostData(prev => ({ ...prev, title }));
+
+    // One model change: Ctrl+Z restores the article exactly as it was
+    editor.model.change(() => {
+      insertHtmlInEditor(html, editor.model.createRangeIn(editor.model.document.getRoot()));
+    });
+
+    setFeedback({
+      type: 'success',
+      message: [
+        title ? t('editor.format.title', { title }) : '',
+        t('editor.format.done', stats),
+        style.postsAnalysed
+          ? t('editor.format.learnt', { count: style.postsAnalysed })
+          : t('editor.format.defaults'),
+        t('editor.format.undo')
+      ].filter(Boolean).join(' '),
+      duration: 9000
+    });
+  };
+
+  const getBlogStyleHint = async () => {
+    const { style, labels } = await getBlogStyle();
+    return describeBlogStyle(style)
+      + (labels.length ? ` Labels already used on this blog: ${labels.slice(0, 30).join(', ')}.` : '');
+  };
+
   const handleFileImport = async (e) => {
     const input = e.target;
     const file = input.files[0];
@@ -991,6 +1059,9 @@ ${toBloggerHtml(postData.content)}
                 </div>
 
                 <div className="post-toolbar-buttons">
+                  <button type="button" className="format-blog-button" onClick={handleFormatLikeBlog}>
+                    {t('editor.format.button')}
+                  </button>
                   <button onClick={() => setShowMetadataEditor(!showMetadataEditor)}>
                     {showMetadataEditor ? t('editor.buttons.hideMetadata') : t('editor.buttons.showMetadata')}
                   </button>
@@ -1075,6 +1146,7 @@ ${toBloggerHtml(postData.content)}
             getTitle={() => autoSaveDataRef.current.postData.title}
             getContent={() => autoSaveDataRef.current.postData.content}
             getSelectionHtml={getEditorSelectionHtml}
+            getBlogStyleHint={getBlogStyleHint}
             applyAction={applyAIAction}
             onClose={toggleAIPanel}
           />
