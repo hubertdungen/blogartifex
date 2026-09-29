@@ -185,6 +185,14 @@ const translations = {
       codeBlock: {
         plain: 'Texto simples'
       },
+      labelsAuto: {
+        button: "✨ Sugerir",
+        tooltip: "Acrescentar as etiquetas do blogue que se aplicam a este artigo",
+        learning: "A ler as etiquetas do blogue…",
+        added: "Etiquetas acrescentadas: {labels} (aprendidas em {count} artigos). Retire as que não quiser.",
+        none: "Nenhuma etiqueta do blogue se aplica claramente a este artigo.",
+        noLabels: "Os artigos publicados ainda não têm etiquetas, por isso não há nada para sugerir."
+      },
       format: {
         button: "✨ Formatar como o blogue",
         learning: "A aprender o estilo do blogue…",

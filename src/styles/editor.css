@@ -634,3 +634,31 @@
   filter: brightness(1.1);
   background: linear-gradient(135deg, #7c3aed, #2563eb);
 }
+
+/* Labels: title row with the "Suggest" button */
+.editor-content .post-options .labels-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.editor-content .post-options .suggest-labels-button {
+  padding: 3px 10px;
+  min-height: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 999px;
+  border: 1px solid rgba(124, 58, 237, 0.45);
+  background: rgba(124, 58, 237, 0.1);
+  color: #7c3aed;
+  cursor: pointer;
+}
+
+.dark .editor-content .post-options .suggest-labels-button {
+  color: #c4b5fd;
+}
+
+.editor-content .post-options .suggest-labels-button:hover {
+  background: rgba(124, 58, 237, 0.2);
+}

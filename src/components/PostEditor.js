@@ -17,6 +17,7 @@ import { ClassicEditor, buildEditorConfig } from '../utils/editorConfig';
 import { toBloggerHtml, fromBloggerHtml } from '../utils/bloggerHtml';
 import { shrinkEmbeddedImages, hostEmbeddedImages, byteSize } from '../utils/webImages';
 import { learnBlogStyle, formatLikeBlog, describeBlogStyle, liftImageParagraphs, DEFAULT_STYLE } from '../utils/blogStyle';
+import { suggestLabels } from '../utils/autoLabels';
 
 /**
  * Componente do Editor de Posts
@@ -840,6 +841,54 @@ ${toBloggerHtml(postData.content)}
     });
   };
 
+  // Labels: learnt from up to 100 published posts, per blog
+  const labelPostsCache = useRef({});
+
+  const handleSuggestLabels = async () => {
+    const editor = editorRef.current;
+    const plain = html => new DOMParser().parseFromString(html || '', 'text/html').body.textContent || '';
+    const articleText = `${postData.title} ${plain(editor ? editor.getData() : postData.content)}`;
+    if (!articleText.trim()) {
+      setFeedback({ type: 'info', message: t('editor.format.empty'), duration: 4000 });
+      return;
+    }
+
+    try {
+      if (!labelPostsCache.current[selectedBlog]) {
+        setFeedback({ type: 'loading', message: t('editor.labelsAuto.learning') });
+        const data = await BloggerService.getPosts(selectedBlog, {
+          status: 'live',
+          maxResults: 100,
+          fetchBodies: true,
+          fields: 'items(title,labels,content)'
+        });
+        labelPostsCache.current[selectedBlog] = (data.items || [])
+          .map(item => ({ labels: item.labels || [], text: `${item.title || ''} ${plain(item.content)}` }));
+      }
+      const posts = labelPostsCache.current[selectedBlog];
+      const suggestions = suggestLabels({ articleText, posts, current: postData.labels });
+
+      if (!suggestions.length) {
+        setFeedback({
+          type: 'info',
+          message: posts.some(post => post.labels.length) ? t('editor.labelsAuto.none') : t('editor.labelsAuto.noLabels'),
+          duration: 6000
+        });
+        return;
+      }
+
+      const added = suggestions.map(suggestion => suggestion.label);
+      setPostData(prev => ({ ...prev, labels: [...prev.labels, ...added] }));
+      setFeedback({
+        type: 'success',
+        message: t('editor.labelsAuto.added', { labels: added.join(', '), count: posts.length }),
+        duration: 7000
+      });
+    } catch (error) {
+      setFeedback({ type: 'error', message: t('editor.notifications.error', { message: error.message }) });
+    }
+  };
+
   const getBlogStyleHint = async () => {
     const { style, labels } = await getBlogStyle();
     return describeBlogStyle(style)
@@ -1007,7 +1056,17 @@ ${toBloggerHtml(postData.content)}
             <div className="post-actions">
               <div className="post-fields">
                 <div className="labels-input">
-                  <label>{t('editor.labels.tags')}</label>
+                  <div className="labels-label-row">
+                    <label>{t('editor.labels.tags')}</label>
+                    <button
+                      type="button"
+                      className="suggest-labels-button"
+                      onClick={handleSuggestLabels}
+                      title={t('editor.labelsAuto.tooltip')}
+                    >
+                      {t('editor.labelsAuto.button')}
+                    </button>
+                  </div>
                   <input
                     type="text"
                     value={postData.labels.join(', ')}
