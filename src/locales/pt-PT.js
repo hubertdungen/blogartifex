@@ -16,6 +16,7 @@ const translations = {
       confirmLogout: 'Tem a certeza que deseja terminar a sessão? Os seus dados locais serão mantidos.',
       loginError: 'Falha na autenticação: {message}',
       checkConnection: 'Verifique a sua ligação e tente novamente.',
+      missingBloggerScope: "O BlogArtifex não recebeu acesso ao Blogger. Inicie sessão de novo e, no ecrã da Google, marque a permissão para gerir a sua conta do Blogger.",
       chooseBloggerAccount: 'Escolha a conta Google que tem acesso aos seus blogues do Blogger.'
     },
     
