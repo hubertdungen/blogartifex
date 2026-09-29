@@ -185,7 +185,15 @@ const translations = {
         plain: 'Texto simples'
       },
       import: {
-        docxDone: 'Documento Word importado. Dica: copiar e colar a partir do Word também mantém tipos de letra, cores e alinhamento.',
+        converting: "A converter o documento…",
+        convert: {
+          auth: "A sessão expirou. Inicie sessão de novo para importar este ficheiro.",
+          tooLarge: "O ficheiro tem mais de 20 MB.",
+          busy: "Está outro documento a ser convertido. Tente de novo daqui a uns segundos.",
+          unavailable: "Esta instalação não converte ficheiros .doc/.rtf/.odt (falta o LibreOffice). No Word, guarde-o como .docx e importe esse ficheiro.",
+          failed: "Não foi possível converter o documento ({message}). No Word, guarde-o como .docx e importe esse ficheiro."
+        },
+        docxDone: "Documento importado. Dica: copiar e colar a partir do Word também mantém tipos de letra, cores e alinhamento.",
         localImages: "Não foi possível colar {count} imagem(ns) do Word (o Word para Mac, o Word Online e o Outlook não as partilham). Insira-as com o botão de imagem.",
         failed: 'Não foi possível importar o ficheiro: {message}'
       },

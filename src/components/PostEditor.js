@@ -733,6 +733,27 @@ ${toBloggerHtml(postData.content)}
     }
   };
 
+  // .docx → HTML in the browser (mammoth, BSD, loaded on demand): headings,
+  // lists, tables, links, bold/italic and embedded images.
+  const importDocx = async (arrayBuffer) => {
+    const { default: mammoth } = await import('mammoth');
+    const result = await mammoth.convertToHtml(
+      { arrayBuffer },
+      { styleMap: ["p[style-name='Title'] => h1.ba-doc-title:fresh"] }
+    );
+
+    const doc = new DOMParser().parseFromString(result.value, 'text/html');
+    // The document title (Word "Title" style, or a leading Heading 1)
+    // becomes the post title instead of repeating it in the body.
+    const titleElement = doc.querySelector('h1.ba-doc-title')
+      || (doc.body.firstElementChild?.tagName === 'H1' ? doc.body.firstElementChild : null);
+    const title = titleElement ? titleElement.textContent.trim() : '';
+    if (titleElement) titleElement.remove();
+
+    applyImportedContent(title, doc.body.innerHTML);
+    setFeedback({ type: 'success', message: t('editor.import.docxDone'), duration: 5000 });
+  };
+
   const handleFileImport = async (e) => {
     const input = e.target;
     const file = input.files[0];
@@ -740,24 +761,32 @@ ${toBloggerHtml(postData.content)}
 
     try {
       if (/\.docx$/i.test(file.name)) {
-        // .docx → HTML in the browser (mammoth, BSD, loaded on demand):
-        // headings, lists, tables, links, bold/italic and embedded images.
-        const { default: mammoth } = await import('mammoth');
-        const result = await mammoth.convertToHtml(
-          { arrayBuffer: await file.arrayBuffer() },
-          { styleMap: ["p[style-name='Title'] => h1.ba-doc-title:fresh"] }
-        );
+        await importDocx(await file.arrayBuffer());
+        return;
+      }
 
-        const doc = new DOMParser().parseFromString(result.value, 'text/html');
-        // The document title (Word "Title" style, or a leading Heading 1)
-        // becomes the post title instead of repeating it in the body.
-        const titleElement = doc.querySelector('h1.ba-doc-title')
-          || (doc.body.firstElementChild?.tagName === 'H1' ? doc.body.firstElementChild : null);
-        const title = titleElement ? titleElement.textContent.trim() : '';
-        if (titleElement) titleElement.remove();
-
-        applyImportedContent(title, doc.body.innerHTML);
-        setFeedback({ type: 'success', message: t('editor.import.docxDone'), duration: 4000 });
+      // Old binary .doc (Word 97-2003), RTF and OpenDocument: the server
+      // converts them to .docx with LibreOffice, then the .docx path runs.
+      const legacy = file.name.match(/\.(doc|rtf|odt)$/i);
+      if (legacy) {
+        setFeedback({ type: 'loading', message: t('editor.import.converting') });
+        const response = await fetch(`./api/convert?from=${legacy[1].toLowerCase()}`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${AuthService.getAuthToken()}`,
+            'Content-Type': 'application/octet-stream'
+          },
+          body: file
+        });
+        if (!response.ok) {
+          const reason = { 401: 'auth', 413: 'tooLarge', 429: 'busy', 501: 'unavailable' }[response.status] || 'failed';
+          setFeedback({
+            type: 'error',
+            message: t(`editor.import.convert.${reason}`, { message: `HTTP ${response.status}` })
+          });
+          return;
+        }
+        await importDocx(await response.arrayBuffer());
         return;
       }
 
@@ -951,7 +980,7 @@ ${toBloggerHtml(postData.content)}
                     {t('editor.buttons.importFile')}
                     <input
                       type="file"
-                      accept=".docx,.html,.htm,.txt"
+                      accept=".docx,.doc,.rtf,.odt,.html,.htm,.txt"
                       onChange={handleFileImport}
                       style={{ display: 'none' }}
                     />

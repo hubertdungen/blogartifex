@@ -185,7 +185,15 @@ const translations = {
         plain: 'Plain text'
       },
       import: {
-        docxDone: 'Word document imported. Tip: copying and pasting from Word also keeps fonts, colours and alignment.',
+        converting: "Converting the document…",
+        convert: {
+          auth: "Your session has expired. Sign in again to import this file.",
+          tooLarge: "The file is larger than 20 MB.",
+          busy: "Another document is being converted. Try again in a few seconds.",
+          unavailable: "This installation can't convert .doc/.rtf/.odt files (LibreOffice isn't available). In Word, save it as .docx and import that file.",
+          failed: "Could not convert the document ({message}). In Word, save it as .docx and import that file."
+        },
+        docxDone: "Document imported. Tip: copying and pasting from Word also keeps fonts, colours and alignment.",
         localImages: "{count} image(s) from Word could not be pasted (Word for Mac, Word Online and Outlook don't share them). Insert them with the image button.",
         failed: 'Could not import the file: {message}'
       },
