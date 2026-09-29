@@ -43,6 +43,30 @@ export const AI_PROVIDERS = {
     defaultModel: 'claude-sonnet-5',
     keyPlaceholder: 'sk-ant-...',
     keyUrl: 'https://console.anthropic.com/settings/keys'
+  },
+  deepseek: {
+    id: 'deepseek',
+    label: 'DeepSeek',
+    models: ['deepseek-chat', 'deepseek-reasoner'],
+    defaultModel: 'deepseek-chat',
+    keyPlaceholder: 'sk-...',
+    keyUrl: 'https://platform.deepseek.com/api_keys'
+  },
+  groq: {
+    id: 'groq',
+    label: 'Meta Llama (Groq)',
+    models: ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'],
+    defaultModel: 'llama-3.3-70b-versatile',
+    keyPlaceholder: 'gsk_...',
+    keyUrl: 'https://console.groq.com/keys'
+  },
+  openrouter: {
+    id: 'openrouter',
+    label: 'OpenRouter',
+    models: ['openrouter/auto'],
+    defaultModel: 'openrouter/auto',
+    keyPlaceholder: 'sk-or-...',
+    keyUrl: 'https://openrouter.ai/keys'
   }
 };
 
@@ -50,9 +74,9 @@ const DEFAULT_SETTINGS = {
   enabled: false,
   provider: 'openai',
   // One key per provider so switching providers does not lose keys.
-  apiKeys: { openai: '', gemini: '', anthropic: '' },
+  apiKeys: { openai: '', gemini: '', anthropic: '', deepseek: '', groq: '', openrouter: '' },
   // Empty model means "use the provider default".
-  models: { openai: '', gemini: '', anthropic: '' },
+  models: { openai: '', gemini: '', anthropic: '', deepseek: '', groq: '', openrouter: '' },
   tone: 'default',
   customTone: ''
 };
@@ -80,7 +104,96 @@ export const getActiveProvider = (settings = getAISettings()) => {
 
 export const getActiveModel = (settings = getAISettings()) => {
   const provider = getActiveProvider(settings);
-  return (settings.models && settings.models[provider.id]) || provider.defaultModel;
+  return (settings.models && settings.models[provider.id])
+    || getCachedModels(provider.id).auto
+    || provider.defaultModel;
+};
+
+// ---- Live model lists ------------------------------------------------------
+// Model names change every few weeks, so the list comes from each provider
+// (with the user's key) and "Automatic" picks the newest balanced model.
+// The static lists above are only a fallback before the first refresh.
+
+const MODELS_KEY = 'blogartifex_ai_models';
+const MODELS_MAX_AGE = 24 * 60 * 60 * 1000;
+const bearer = key => ({ Authorization: `Bearer ${key}` });
+const NOT_CHAT = /(audio|realtime|transcribe|tts|image|dall-e|whisper|search|embed|moderation|instruct|codex|guard|vision-exp|:batch)/i;
+const versionOf = id => parseFloat((id.match(/(\d+(?:\.\d+)?)/) || [])[1]) || 0;
+
+const MODEL_SOURCES = {
+  openai: {
+    url: 'https://api.openai.com/v1/models',
+    headers: bearer,
+    parse: data => (data.data || [])
+      .filter(m => /^(gpt-|o\d)/.test(m.id) && !NOT_CHAT.test(m.id))
+      .map(m => ({ id: m.id, created: m.created || 0 })),
+    auto: list => list.find(m => !/(pro|mini|nano|preview|\d{4}-\d{2}-\d{2})/.test(m.id))
+  },
+  anthropic: {
+    url: 'https://api.anthropic.com/v1/models?limit=100',
+    headers: key => ({ 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }),
+    parse: data => (data.data || []).map(m => ({ id: m.id, created: Date.parse(m.created_at) / 1000 || 0 })),
+    auto: list => list.find(m => /sonnet/.test(m.id))
+  },
+  gemini: {
+    url: 'https://generativelanguage.googleapis.com/v1beta/models?pageSize=200',
+    headers: key => ({ 'x-goog-api-key': key }),
+    parse: data => (data.models || [])
+      .filter(m => (m.supportedGenerationMethods || []).includes('generateContent')
+        && /^models\/gemini/.test(m.name) && !NOT_CHAT.test(m.name) && !/live/.test(m.name))
+      .map(m => ({ id: m.name.replace(/^models\//, ''), created: versionOf(m.name.replace(/^models\/gemini-/, '')) })),
+    auto: list => list.find(m => /flash/.test(m.id) && !/(lite|preview|exp|latest)/.test(m.id))
+  },
+  deepseek: {
+    url: 'https://api.deepseek.com/models',
+    headers: bearer,
+    parse: data => (data.data || []).map(m => ({ id: m.id, created: 0 })),
+    auto: list => list.find(m => m.id === 'deepseek-chat')
+  },
+  groq: {
+    url: 'https://api.groq.com/openai/v1/models',
+    headers: bearer,
+    parse: data => (data.data || [])
+      .filter(m => /llama/i.test(m.id) && !NOT_CHAT.test(m.id))
+      .map(m => ({ id: m.id, created: m.created || 0 })),
+    auto: list => list.find(m => /(versatile|maverick|scout|70b)/.test(m.id))
+  },
+  openrouter: {
+    url: 'https://openrouter.ai/api/v1/models',
+    headers: () => ({}),
+    parse: data => (data.data || [])
+      .filter(m => !NOT_CHAT.test(m.id))
+      .map(m => ({ id: m.id, created: m.created || 0, free: /:free$/.test(m.id) })),
+    auto: () => ({ id: 'openrouter/auto' })
+  }
+};
+
+/** Last model list fetched for a provider: { at, models: [{id, free}], auto } */
+export const getCachedModels = (providerId) => (getStoredJson(MODELS_KEY, {})[providerId]) || {};
+
+export const modelListIsStale = (providerId) => {
+  const cached = getCachedModels(providerId);
+  return !cached.at || Date.now() - cached.at > MODELS_MAX_AGE;
+};
+
+/**
+ * Fetches the provider's current models with the user's key, newest first,
+ * and works out the "Automatic" choice. Cached for 24 h.
+ */
+export const refreshModels = async (providerId, apiKey) => {
+  const source = MODEL_SOURCES[providerId];
+  if (!source) throw new Error(`Unknown AI provider: ${providerId}`);
+
+  const response = await fetchWithTimeout(source.url, { headers: source.headers(apiKey) });
+  if (!response.ok) throw new Error(await readErrorMessage(response));
+  const list = source.parse(await response.json())
+    .sort((a, b) => (b.free === true) - (a.free === true) || b.created - a.created || b.id.localeCompare(a.id));
+  if (!list.length) throw new Error('The provider returned no chat models.');
+
+  const auto = (source.auto(list) || list.find(m => !/(preview|exp)/.test(m.id)) || list[0]).id;
+  const entry = { at: Date.now(), models: list.map(({ id, free }) => ({ id, free: !!free })), auto };
+  setStoredValue(MODELS_KEY, JSON.stringify({ ...getStoredJson(MODELS_KEY, {}), [providerId]: entry }));
+  return entry;
 };
 
 export const getActiveApiKey = (settings = getAISettings()) => {
@@ -287,29 +400,37 @@ const readErrorMessage = async (response) => {
   return `AI request failed (${response.status}). ${detail}`.trim();
 };
 
-const callOpenAI = async ({ apiKey, model, system, messages, maxTokens }) => {
-  const response = await fetchWithTimeout('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`
-    },
-    body: JSON.stringify({
-      model,
-      max_completion_tokens: maxTokens,
-      messages: [
-        { role: 'system', content: system },
-        ...messages.map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content }))
-      ]
-    })
-  });
+// OpenAI's chat format, also spoken by DeepSeek, Groq and OpenRouter
+const openAICompatible = ({ url, tokensField = 'max_tokens', headers = {} }) =>
+  async ({ apiKey, model, system, messages, maxTokens }) => {
+    const response = await fetchWithTimeout(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+        ...headers
+      },
+      body: JSON.stringify({
+        model,
+        [tokensField]: maxTokens,
+        messages: [
+          { role: 'system', content: system },
+          ...messages.map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content }))
+        ]
+      })
+    });
 
-  if (!response.ok) throw new Error(await readErrorMessage(response));
-  const data = await response.json();
-  const text = data?.choices?.[0]?.message?.content;
-  if (!text) throw new Error('The AI provider returned an empty response.');
-  return text;
-};
+    if (!response.ok) throw new Error(await readErrorMessage(response));
+    const data = await response.json();
+    const text = data?.choices?.[0]?.message?.content;
+    if (!text) throw new Error('The AI provider returned an empty response.');
+    return text;
+  };
+
+const callOpenAI = openAICompatible({
+  url: 'https://api.openai.com/v1/chat/completions',
+  tokensField: 'max_completion_tokens'
+});
 
 const callGemini = async ({ apiKey, model, system, messages, maxTokens }) => {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
@@ -364,7 +485,13 @@ const callAnthropic = async ({ apiKey, model, system, messages, maxTokens }) => 
 const TRANSPORTS = {
   openai: callOpenAI,
   gemini: callGemini,
-  anthropic: callAnthropic
+  anthropic: callAnthropic,
+  deepseek: openAICompatible({ url: 'https://api.deepseek.com/chat/completions' }),
+  groq: openAICompatible({ url: 'https://api.groq.com/openai/v1/chat/completions' }),
+  openrouter: openAICompatible({
+    url: 'https://openrouter.ai/api/v1/chat/completions',
+    headers: { 'HTTP-Referer': typeof window !== 'undefined' ? window.location.origin : '', 'X-Title': 'BlogArtifex' }
+  })
 };
 
 /**

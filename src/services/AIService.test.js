@@ -21,7 +21,7 @@ describe('AIService settings', () => {
     const settings = getAISettings();
     expect(settings.enabled).toBe(false);
     expect(settings.provider).toBe('openai');
-    expect(settings.apiKeys).toEqual({ openai: '', gemini: '', anthropic: '' });
+    expect(settings.apiKeys).toEqual({ openai: '', gemini: '', anthropic: '', deepseek: '', groq: '', openrouter: '' });
   });
 
   test('saves and merges settings per provider', () => {
@@ -281,5 +281,41 @@ describe('provider transports', () => {
 
     expect(result.reply).toBe('done');
     expect(result.actions[0].html).toBe('<p>ok</p>');
+  });
+});
+
+describe('live model lists', () => {
+  const { refreshModels } = require('./AIService');
+  const reply = body => Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(body) });
+  afterEach(() => { delete global.fetch; localStorage.clear(); });
+
+  test('OpenAI: newest balanced chat model, skipping pro, dated and non-chat', async () => {
+    global.fetch = () => reply({ data: [
+      { id: 'gpt-6-luna-pro', created: 30 }, { id: 'gpt-6-luna', created: 29 },
+      { id: 'gpt-6-2026-09-01', created: 31 }, { id: 'gpt-realtime-6', created: 32 }, { id: 'gpt-5.4-mini', created: 10 }
+    ] });
+    const info = await refreshModels('openai', 'sk');
+    expect(info.auto).toBe('gpt-6-luna');
+    expect(info.models.map(m => m.id)).not.toContain('gpt-realtime-6');
+  });
+
+  test('Claude: newest Sonnet; the active model follows the refreshed list', async () => {
+    global.fetch = () => reply({ data: [
+      { id: 'claude-opus-5-5', created_at: '2026-09-22T00:00:00Z' },
+      { id: 'claude-sonnet-5-5', created_at: '2026-09-28T00:00:00Z' },
+      { id: 'claude-sonnet-5', created_at: '2026-07-01T00:00:00Z' }
+    ] });
+    expect((await refreshModels('anthropic', 'sk-ant')).auto).toBe('claude-sonnet-5-5');
+    saveAISettings({ provider: 'anthropic', models: { ...getAISettings().models, anthropic: '' } });
+    expect(getActiveModel()).toBe('claude-sonnet-5-5');
+  });
+
+  test('OpenRouter: free models listed first, automatic router by default', async () => {
+    global.fetch = () => reply({ data: [
+      { id: 'openai/gpt-6-luna', created: 9 }, { id: 'meta-llama/llama-4-scout:free', created: 1 }
+    ] });
+    const info = await refreshModels('openrouter', '');
+    expect(info.models[0]).toEqual({ id: 'meta-llama/llama-4-scout:free', free: true });
+    expect(info.auto).toBe('openrouter/auto');
   });
 });

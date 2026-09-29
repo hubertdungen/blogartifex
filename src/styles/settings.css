@@ -231,3 +231,20 @@
       width: 100%;
     }
   }
+.ai-model-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.ai-model-row select {
+  flex: 1;
+  min-width: 0;
+}
+
+.ai-models-refresh {
+  width: 40px;
+  min-height: 38px;
+  padding: 0;
+  font-size: 1.1rem;
+}
