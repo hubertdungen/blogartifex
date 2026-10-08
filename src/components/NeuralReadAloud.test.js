@@ -22,7 +22,7 @@ test('offers only PT-PT and US English, reads latest edits and pauses without re
   view.rerender(<NeuralReadAloud title="New title" content="<p>Edited article</p>" />);
   fetch.mockResolvedValue({ ok: true, blob: async () => new Blob(['wav']) });
   fireEvent.click(screen.getByText('Ouvir artigo'));
-  await waitFor(() => expect(screen.getByText('Pausar')).toBeInTheDocument());
+  await waitFor(() => expect(screen.getByText('Pausar')).toBeEnabled());
   const payload = JSON.parse(fetch.mock.calls[1][1].body);
   expect(payload).toEqual({ text: 'New title\nEdited article', voice: 'pt_PT-tugao', rate: 1 });
   fireEvent.click(screen.getByText('Pausar'));
@@ -58,4 +58,24 @@ test('prefetches next passage and continues automatically', async () => {
   await act(async () => { view.container.querySelector('audio').onended(); });
   await waitFor(() => expect(play).toHaveBeenCalledTimes(2));
   expect(fetch).toHaveBeenCalledTimes(3);
+});
+
+test('adjusts volume during playback without regenerating audio and restores the preference', async () => {
+  const view = render(<NeuralReadAloud title="Title" content="Text" />);
+  await waitFor(() => expect(screen.getByText('Ouvir artigo')).toBeEnabled());
+  fetch.mockResolvedValue({ ok: true, blob: async () => new Blob(['wav']) });
+  fireEvent.click(screen.getByText('Ouvir artigo'));
+  await waitFor(() => expect(play).toHaveBeenCalledTimes(1));
+  fireEvent.change(screen.getByRole('slider', { name: /Volume/ }), { target: { value: '35' } });
+  expect(view.container.querySelector('audio').volume).toBe(.35);
+  expect(localStorage.getItem('blogartifex_speech_volume')).toBe('0.35');
+  expect(fetch).toHaveBeenCalledTimes(2);
+  expect(play).toHaveBeenCalledTimes(1);
+  fireEvent.change(screen.getByRole('slider'), { target: { value: '0' } });
+  expect(view.container.querySelector('audio').volume).toBe(0);
+  view.unmount();
+  const restored = render(<NeuralReadAloud title="Title" content="Text" />);
+  expect(screen.getByRole('slider')).toHaveValue('0');
+  expect(restored.container.querySelector('audio').volume).toBe(0);
+  await act(async () => {});
 });

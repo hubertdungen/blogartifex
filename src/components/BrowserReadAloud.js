@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import ReadAloudVolume, { useReadAloudVolume } from './ReadAloudVolume';
 import i18n, { t } from '../services/I18nService';
 import { getStoredValue, setStoredValue } from '../utils/storage';
 import { articleText, rankVoices, speechChunks } from '../utils/readAloud';
@@ -14,6 +15,8 @@ export default function BrowserReadAloud({ title, content, onClose }) {
     return saved >= 0.5 && saved <= 2 ? saved : 1;
   });
   const [, setLocale] = useState(i18n.getLocale());
+  const [volume, changeVolume] = useReadAloudVolume();
+  const volumeRef = useRef(volume);
   const [status, setStatus] = useState('idle');
   const [position, setPosition] = useState(0);
   const [total, setTotal] = useState(0);
@@ -57,6 +60,7 @@ export default function BrowserReadAloud({ title, content, onClose }) {
     utterance.voice = voice;
     utterance.lang = voice?.lang || language;
     utterance.rate = rate;
+    utterance.volume = volumeRef.current;
     setPosition(index);
     setStatus('playing');
     utterance.onend = () => {
@@ -102,10 +106,13 @@ export default function BrowserReadAloud({ title, content, onClose }) {
     </div>
     {onClose && <p className="read-aloud-article">{title}</p>}
     <div className="read-aloud-controls">
-      <button type="button" disabled={!supported || !sorted.length} onClick={status === 'playing' ? pause : play}>
-        {t(status === 'playing' ? 'speech.pause' : status === 'paused' ? 'speech.resume' : 'speech.play')}
+      <button type="button" disabled={!supported || !sorted.length || status === 'playing'} onClick={play}>
+        <span aria-hidden="true">▶</span> {t(status === 'paused' ? 'speech.resume' : 'speech.play')}
       </button>
-      <button type="button" disabled={status === 'idle'} onClick={stop}>{t('speech.stop')}</button>
+      <button type="button" disabled={status !== 'playing'} onClick={pause}>
+        <span aria-hidden="true">⏸</span> {t('speech.pause')}
+      </button>
+      <button type="button" disabled={status === 'idle'} onClick={stop}><span aria-hidden="true">⏹</span> {t('speech.stop')}</button>
       <label>{t('speech.language')} <select value={language} onChange={event => {
         stop(); setLanguage(event.target.value); setVoiceURI('');
         setStoredValue('blogartifex_speech_language', event.target.value);
@@ -114,6 +121,11 @@ export default function BrowserReadAloud({ title, content, onClose }) {
       <label>{t('speech.voice')} <select value={voice?.voiceURI || ''} disabled={!sorted.length} onChange={event => {
         stop(); setVoiceURI(event.target.value); setStoredValue('blogartifex_speech_voice', event.target.value);
       }}>{sorted.map(item => <option key={item.voiceURI} value={item.voiceURI}>{item.name} ({item.lang})</option>)}</select></label>
+      <ReadAloudVolume volume={volume} onChange={value => {
+        volumeRef.current = value;
+        changeVolume(value);
+        if (session.current.utterance) session.current.utterance.volume = value;
+      }} />
       <label>{t('speech.speed')} <select value={rate} onChange={event => {
         stop(); setRate(Number(event.target.value)); setStoredValue('blogartifex_speech_rate', event.target.value);
       }}>{[0.5, 0.75, 1, 1.25, 1.5, 2].map(value => <option key={value} value={value}>{value}×</option>)}</select></label>

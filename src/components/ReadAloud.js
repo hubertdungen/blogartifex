@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import BrowserReadAloud from './BrowserReadAloud';
+import ReadAloudVolume, { useReadAloudVolume } from './ReadAloudVolume';
 import AuthService from '../services/AuthService';
 import i18n, { t } from '../services/I18nService';
 import { getStoredValue, setStoredValue } from '../utils/storage';
@@ -26,6 +27,7 @@ export function NeuralReadAloud({ title, content, onClose }) {
     const saved = Number(getStoredValue('blogartifex_speech_rate', '1'));
     return saved >= .5 && saved <= 2 ? saved : 1;
   });
+  const [volume, changeVolume] = useReadAloudVolume();
   const [status, setStatus] = useState('idle');
   const [error, setError] = useState('');
   const [position, setPosition] = useState(0);
@@ -33,6 +35,10 @@ export function NeuralReadAloud({ title, content, onClose }) {
   const player = useRef(null);
   const session = useRef({ generation: 0, controller: null, url: null, chunks: [], index: 0, prefetch: null });
   const voice = voices?.find(item => item.id === voiceId) || voices?.[0];
+
+  useEffect(() => {
+    if (player.current) player.current.volume = volume;
+  }, [volume]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -138,13 +144,17 @@ export function NeuralReadAloud({ title, content, onClose }) {
     </div>
     {onClose && <p className="read-aloud-article">{title}</p>}
     <div className="read-aloud-controls">
-      <button type="button" disabled={!voice || status === 'loading'} onClick={status === 'playing' ? pause : play}>
-        {t(status === 'loading' ? 'speech.generating' : status === 'playing' ? 'speech.pause' : status === 'paused' ? 'speech.resume' : 'speech.play')}
+      <button type="button" disabled={!voice || status === 'loading' || status === 'playing'} onClick={play}>
+        <span aria-hidden="true">▶</span> {t(status === 'loading' ? 'speech.generating' : status === 'paused' ? 'speech.resume' : 'speech.play')}
       </button>
-      <button type="button" disabled={status === 'idle'} onClick={stop}>{t('speech.stop')}</button>
+      <button type="button" disabled={status !== 'playing'} onClick={pause}>
+        <span aria-hidden="true">⏸</span> {t('speech.pause')}
+      </button>
+      <button type="button" disabled={status === 'idle'} onClick={stop}><span aria-hidden="true">⏹</span> {t('speech.stop')}</button>
       <label>{t('speech.voice')} <select value={voice?.id || ''} disabled={!voice} onChange={event => {
         stop(); setVoiceId(event.target.value); setStoredValue('blogartifex_neural_voice', event.target.value);
       }}>{voices?.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+      <ReadAloudVolume volume={volume} onChange={changeVolume} />
       <label>{t('speech.speed')} <select value={rate} onChange={event => {
         stop(); setRate(Number(event.target.value)); setStoredValue('blogartifex_speech_rate', event.target.value);
       }}>{[.5, .75, 1, 1.25, 1.5, 2].map(value => <option key={value} value={value}>{value}×</option>)}</select></label>

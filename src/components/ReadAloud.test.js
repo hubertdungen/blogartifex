@@ -56,3 +56,15 @@ test('disables playback when the browser has no installed voices', () => {
   expect(screen.getByText('Ouvir artigo')).toBeDisabled();
   expect(screen.getByRole('status')).toHaveTextContent('Sem vozes disponíveis');
 });
+
+test('uses the saved volume for speech and its next passage after a live adjustment', () => {
+  localStorage.setItem('blogartifex_speech_volume', '0.6');
+  render(<ReadAloud title="Title" content={'Sentence with words. '.repeat(40)} />);
+  fireEvent.click(screen.getByText('Ouvir artigo'));
+  const first = synth.speak.mock.calls[0][0];
+  expect(first.volume).toBe(.6);
+  fireEvent.change(screen.getByRole('slider', { name: /Volume/ }), { target: { value: '25' } });
+  act(() => first.onend());
+  expect(synth.speak.mock.calls[1][0].volume).toBe(.25);
+  expect(localStorage.getItem('blogartifex_speech_volume')).toBe('0.25');
+});

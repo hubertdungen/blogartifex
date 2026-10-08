@@ -3,6 +3,7 @@
  */
 const translations = {
     speech: {
+      volume: 'Volume',
       engine: "Tipo de voz",
       neural: "Voz neural local",
       browser: "Voz do navegador (alternativa)",

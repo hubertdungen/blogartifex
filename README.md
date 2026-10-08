@@ -350,7 +350,7 @@ Developed with ❤️ for the blogging community
 
 ### Neural read aloud (v2.1.0)
 
-Listen to current editor contents (including unsaved edits) or load a published post/draft from the dashboard. The default local neural engine offers **European Portuguese (Tugão, Piper)** and **US English (Heart, Kokoro)** only. No Brazilian Portuguese voices are offered. Playback includes speed, stop, and pause/resume at the same position.
+Listen to current editor contents (including unsaved edits) or load a published post/draft from the dashboard. The default local neural engine offers **European Portuguese (Tugão, Piper)** and **US English (Heart, Kokoro)** only. No Brazilian Portuguese voices are offered. Playback includes speed, a saved volume slider (0–100%), and separate Play, Pause and Stop buttons. Neural volume changes apply during playback without regenerating audio; pause/resume keeps the same position.
 
 Install Python 3.10+ and run `npm run voice:setup`, then `npm run build` and `npm run serve`. For portable releases, extract **blogartifex-neural-voice-setup.zip** beside the executable, run `setup-voices.bat` on Windows or `sh setup-voices.sh` on Linux/macOS, and restart BlogArtifex. The isolated Python environment and models use approximately **435 MB** on the tested Linux installation, plus installation cache. Models are downloaded once and speech runs on the server's CPU without paid services or API keys. Kokoro can generate more slowly than playback on older CPUs. Models are unloaded after five idle minutes.
 

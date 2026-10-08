@@ -356,7 +356,7 @@ O modo padrão é **Voz neural local**, com dois idiomas apenas:
 - **Português de Portugal — Tugão (Piper)**, sem sotaque brasileiro.
 - **Inglês dos EUA — Heart (Kokoro)**.
 
-O áudio é gerado no computador que executa o servidor BlogArtifex, sem serviços pagos ou chaves de API. Não há vozes brasileiras no leitor. A primeira passagem demora alguns segundos; o leitor prepara a seguinte enquanto reproduz a atual. Pode ajustar a velocidade, pausar e retomar no mesmo ponto. Fechar o leitor, mudar de modo ou sair da página interrompe a reprodução e cancela a geração pendente. Reiniciar lê as últimas alterações do artigo.
+O áudio é gerado no computador que executa o servidor BlogArtifex, sem serviços pagos ou chaves de API. Não há vozes brasileiras no leitor. A primeira passagem demora alguns segundos; o leitor prepara a seguinte enquanto reproduz a atual. Pode ajustar a velocidade e o volume (0–100%), com botões separados de Play, Pausa e Parar. O volume fica guardado neste navegador e pode ser alterado durante a leitura neural. Pausar e retomar mantém o mesmo ponto. Fechar o leitor, mudar de modo ou sair da página interrompe a reprodução e cancela a geração pendente. Reiniciar lê as últimas alterações do artigo.
 
 #### Instalação única das vozes neurais
 
