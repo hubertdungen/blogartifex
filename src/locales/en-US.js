@@ -2,6 +2,34 @@
  * Translations for English (en-US)
  */
 const translations = {
+    speech: {
+      engine: "Voice type",
+      neural: "Local neural voice",
+      browser: "Browser voice (alternative)",
+      generating: "Preparing audio…",
+      neuralHelp: "Neural speech generated on this computer/server, without a subscription. European Portuguese (Piper) or US English (Kokoro). The first passage may take a few seconds; resume continues from the same point.",
+      neuralUnavailable: "Neural voices are unavailable on this server. See voice installation in the README or use the browser alternative.",
+      neuralFailed: "Could not generate or play the audio. Please try again.",
+      tapResume: "Press Resume to start audio in this browser.",
+      busy: "The reader is busy. Wait a few seconds and try again.",
+      auth: "Sign in again to use neural speech.",
+
+      title: "Read aloud",
+      play: "Listen to article",
+      pause: "Pause",
+      resume: "Resume",
+      stop: "Stop",
+      close: "Close",
+      language: "Language",
+      voice: "Voice",
+      speed: "Speed",
+      progress: "Reading progress",
+      empty: "This article has no text to read yet.",
+      failed: "Could not play this voice. Choose another voice and try again.",
+      unsupported: "This browser does not support reading aloud.",
+      noVoices: "No voices available. Install a system voice or try another browser.",
+      help: "No additional subscription. Quality depends on browser/system voices; prefer Natural, Neural or Premium voices when available. Resume repeats the current passage. Restart to read the latest edits.",
+    },
     app: {
       name: 'BlogArtifex',
       slogan: 'Advanced Editor for Blogger',

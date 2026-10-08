@@ -1,0 +1,13 @@
+.read-aloud { padding: 16px; margin: 16px 0; border: 1px solid currentColor; border-radius: 10px; }
+.read-aloud-heading, .read-aloud-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.read-aloud-heading { justify-content: space-between; }
+.read-aloud-controls { margin-top: 12px; }
+.read-aloud-controls label { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.read-aloud-controls select { max-width: min(320px, 100%); }
+.read-aloud button, .read-aloud select { font: inherit; padding: 7px 10px; }
+.read-aloud-help { font-size: .85rem; opacity: .8; margin: 10px 0; }
+.read-aloud-article { overflow-wrap: anywhere; }
+.read-aloud progress { width: 100%; height: 6px; }
+
+.read-aloud-engine { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
+.read-aloud-engine select { font: inherit; padding: 7px 10px; max-width: 100%; }

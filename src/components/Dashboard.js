@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { googleLogout } from '@react-oauth/google';
 import { useNavigate } from 'react-router-dom';
 import BloggerService from '../services/BloggerService';
 import AuthService from '../services/AuthService';
 import Feedback from './Feedback';
+import ReadAloud from './ReadAloud';
 import i18n, { t } from '../services/I18nService';
 
 // Upper bound on 500-post pages fetched per status for the dashboard counters
@@ -25,10 +26,22 @@ function Dashboard() {
   }, []);
   
   // State
+  const [listeningPost, setListeningPost] = useState(null);
+  const [speechLoading, setSpeechLoading] = useState(null);
+  const speechRequest = useRef({ generation: 0 });
+
+
   const [loading, setLoading] = useState(true);
   const [loadingStats, setLoadingStats] = useState(false);
   const [blogs, setBlogs] = useState([]);
   const [selectedBlog, setSelectedBlog] = useState(null);
+  useEffect(() => {
+    const request = speechRequest.current;
+    request.generation++;
+    setListeningPost(null);
+    setSpeechLoading(null);
+    return () => { request.generation++; };
+  }, [selectedBlog?.id]);
   const [posts, setPosts] = useState([]);
   const [account, setAccount] = useState(() => AuthService.getStoredAccount());
   const [sortBy, setSortBy] = useState('date');
@@ -318,6 +331,20 @@ function Dashboard() {
       } 
     });
   }, [navigate, selectedBlog]);
+
+  const handleListenPost = async postId => {
+    const request = ++speechRequest.current.generation;
+    setListeningPost(null);
+    setSpeechLoading(postId);
+    try {
+      const data = await BloggerService.getPost(selectedBlog.id, postId);
+      if (request === speechRequest.current.generation) setListeningPost(data);
+    } catch (error) {
+      if (request === speechRequest.current.generation) setFeedback({ type: 'error', message: t('dashboard.messages.loadPostsError', { error: error.message }) });
+    } finally {
+      if (request === speechRequest.current.generation) setSpeechLoading(null);
+    }
+  };
 
   /**
    * Duplicate an existing post
@@ -671,6 +698,7 @@ function Dashboard() {
               
               {/* Posts list */}
               <div className="posts-section">
+                {listeningPost && <ReadAloud key={listeningPost.id} title={listeningPost.title} content={listeningPost.content} onClose={() => setListeningPost(null)} />}
                 <h2>{t('dashboard.posts.recentPosts')}</h2>
 
                 {!loadingStats && (
@@ -762,6 +790,7 @@ function Dashboard() {
                         
                         {/* Post actions */}
                         <div className="post-actions">
+                          <button type="button" disabled={speechLoading === post.id} onClick={() => handleListenPost(post.id)}>{speechLoading === post.id ? t("common.loading") : t("speech.play")}</button>
                           <button
                             className="edit-button"
                             onClick={() => handleEditPost(post.id)}

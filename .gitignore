@@ -21,3 +21,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 scheduled-posts.json
+# Local neural voice runtime and downloaded models
+/.voice-venv/
+/voice/models/
+/voice/__pycache__/

@@ -9,6 +9,7 @@ import { saveAs } from 'file-saver';
 import BloggerService from '../services/BloggerService';
 import AuthService from '../services/AuthService';
 import Feedback from './Feedback';
+import ReadAloud from './ReadAloud';
 import AIAssistant from './AIAssistant';
 import AISelectionMenu from './AISelectionMenu';
 import i18n, { t } from '../services/I18nService';
@@ -1180,6 +1181,7 @@ ${toBloggerHtml(postData.content)}
             )}
           </div>
           
+          <ReadAloud key={`${selectedBlog}-${postId || "new"}`} title={postData.title} content={postData.content} />
           <div className="rich-editor">
             <CKEditor
               editor={ClassicEditor}

@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
 const { handleConvert } = require('./docConverter');
+const { handleVoice } = require('./voiceService');
 const { handleUpload, serveMedia } = require('./mediaStore');
 
 const DEFAULT_PORT = 3000;
@@ -51,6 +52,10 @@ const requestHandler = (req, res) => {
   } catch (error) {
     res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' });
     return res.end('Bad Request');
+  }
+
+  if (pathname === '/api/voice' || pathname === '/api/voice/status') {
+    return handleVoice(req, res, url);
   }
 
   // .doc/.rtf/.odt → .docx via LibreOffice (see docConverter.js)

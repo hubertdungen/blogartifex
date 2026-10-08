@@ -347,3 +347,13 @@ BlogArtifex requires minimal permissions to:
 ---
 
 Developed with ❤️ for the blogging community
+
+### Neural read aloud (v2.1.0)
+
+Listen to current editor contents (including unsaved edits) or load a published post/draft from the dashboard. The default local neural engine offers **European Portuguese (Tugão, Piper)** and **US English (Heart, Kokoro)** only. No Brazilian Portuguese voices are offered. Playback includes speed, stop, and pause/resume at the same position.
+
+Install Python 3.10+ and run `npm run voice:setup`, then `npm run build` and `npm run serve`. For portable releases, extract **blogartifex-neural-voice-setup.zip** beside the executable, run `setup-voices.bat` on Windows or `sh setup-voices.sh` on Linux/macOS, and restart BlogArtifex. The isolated Python environment and models use approximately **435 MB** on the tested Linux installation, plus installation cache. Models are downloaded once and speech runs on the server's CPU without paid services or API keys. Kokoro can generate more slowly than playback on older CPUs. Models are unloaded after five idle minutes.
+
+Development: run the API server on port 3000 alongside `npm start` (or adjust package.json's proxy). Static hosting and standalone Android do not run the Python worker; choose the browser alternative there. That alternative also restricts voices to pt-PT and en-US. Reading is inside BlogArtifex; it does not add an audio player to the public blog.
+
+External components are downloaded separately: [Kokoro (Apache 2.0)](https://huggingface.co/hexgrad/Kokoro-82M), [kokoro-onnx (MIT)](https://github.com/thewh1teagle/kokoro-onnx), [Piper (GPL-3.0)](https://github.com/OHF-Voice/piper1-gpl), and [Tugão voice (CC0 dataset)](https://huggingface.co/rhasspy/piper-voices/blob/main/pt/pt_PT/tug%C3%A3o/medium/MODEL_CARD). They are not embedded into BlogArtifex source or portable binaries.

@@ -30,7 +30,22 @@ jobs:
           gh release create "$TAG_NAME" \
             --target "$GITHUB_SHA" \
             --title "BlogArtifex $TAG_NAME" \
-            --notes "Portable BlogArtifex binaries — no installation or dependencies required. Run the file for your operating system; BlogArtifex starts locally and opens the browser automatically. The Android APK is an experimental preview: enable \"install from unknown sources\" to sideload it."
+            --notes "Portable BlogArtifex binaries — no installation or dependencies required. Run the file for your operating system; BlogArtifex starts locally and opens the browser automatically. Neural read aloud supports European Portuguese and US English: install Python 3.10+, extract the optional neural-voice-setup zip beside the executable, and run its setup script (approximately 435 MB downloaded/installed; no subscription required). The Android APK is an experimental preview: enable \"install from unknown sources\" to sideload it."
+
+  neural-voice-setup:
+    name: Optional neural voice installer
+    needs: create-release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Package installer scripts (models downloaded separately)
+        run: zip -r blogartifex-neural-voice-setup.zip voice/setup.py voice/worker.py voice/requirements.txt setup-voices.sh setup-voices.bat README.md README_PT.md
+      - name: Upload installer
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG_NAME: ${{ inputs.tag || github.ref_name }}
+        run: gh release upload "$TAG_NAME" blogartifex-neural-voice-setup.zip --clobber
 
   windows:
     name: Windows portable binary

@@ -346,3 +346,34 @@ O BlogArtifex requer permissões mínimas para:
 ---
 
 Desenvolvido com ❤️ para a comunidade de bloguistas
+
+### Leitura em voz alta (v2.1.0)
+
+Use **Ouvir artigo** no editor para ouvir o título e o conteúdo atual, incluindo alterações ainda não guardadas. No painel, o mesmo botão carrega um artigo publicado, rascunho ou agendado sem abrir o editor; prima Ouvir artigo no leitor para iniciar.
+
+O modo padrão é **Voz neural local**, com dois idiomas apenas:
+
+- **Português de Portugal — Tugão (Piper)**, sem sotaque brasileiro.
+- **Inglês dos EUA — Heart (Kokoro)**.
+
+O áudio é gerado no computador que executa o servidor BlogArtifex, sem serviços pagos ou chaves de API. Não há vozes brasileiras no leitor. A primeira passagem demora alguns segundos; o leitor prepara a seguinte enquanto reproduz a atual. Pode ajustar a velocidade, pausar e retomar no mesmo ponto. Fechar o leitor, mudar de modo ou sair da página interrompe a reprodução e cancela a geração pendente. Reiniciar lê as últimas alterações do artigo.
+
+#### Instalação única das vozes neurais
+
+Requer Python 3.10 ou superior e Internet apenas para descarregar as dependências e modelos. Numa cópia do código-fonte, execute:
+
+```bash
+npm run voice:setup
+npm run build
+npm run serve
+```
+
+Em Windows, pode usar `setup-voices.bat` (com Python instalado). Linux/macOS: `sh setup-voices.sh`. Para uma release portátil, extraia o ficheiro **blogartifex-neural-voice-setup.zip** na mesma pasta do executável e execute o instalador correspondente; reinicie o BlogArtifex. Os modelos não vêm dentro do executável portátil.
+
+O ambiente Python fica isolado em `.voice-venv/`; os modelos em `voice/models/`. A instalação testada em Linux ocupa cerca de **435 MB** (259 MB de dependências e 176 MB de modelos), além da cache de instalação. O modelo Piper PT-PT ocupa cerca de 61 MB; Kokoro e os seus dados de voz ocupam cerca de 115 MB e são usados para inglês dos EUA. Não são necessárias placa gráfica nem subscrições. A velocidade depende do CPU: o teste PT-PT neste i3 gerou 12,5 segundos de áudio em 2,7 segundos; o primeiro teste Kokoro gerou 10,5 segundos em 21 segundos. O processo de voz liberta os modelos após cinco minutos sem uso.
+
+Ao usar `npm start`, execute também `npm run serve` na porta 3000 (ou ajuste o campo `proxy` no package.json ao endereço do servidor). Numa hospedagem apenas estática ou Android sem servidor, o modo neural não está disponível; o leitor informa isso e permite escolher a alternativa do navegador.
+
+A alternativa **Voz do navegador** limita também as vozes a PT-PT e en-US. Não instala vozes e a sua qualidade depende do sistema. O leitor não altera os artigos publicados nem acrescenta áudio ao blogue público.
+
+Modelos e bibliotecas externos: [Kokoro / Apache 2.0](https://huggingface.co/hexgrad/Kokoro-82M), [kokoro-onnx / MIT](https://github.com/thewh1teagle/kokoro-onnx), [Piper / GPL-3.0](https://github.com/OHF-Voice/piper1-gpl), [voz Tugão / dataset CC0](https://huggingface.co/rhasspy/piper-voices/blob/main/pt/pt_PT/tug%C3%A3o/medium/MODEL_CARD). O instalador descarrega estes componentes separadamente; não os inclui no código-fonte nem nos binários BlogArtifex.

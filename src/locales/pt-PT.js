@@ -2,6 +2,34 @@
  * Traduções para Português de Portugal (pt-PT)
  */
 const translations = {
+    speech: {
+      engine: "Tipo de voz",
+      neural: "Voz neural local",
+      browser: "Voz do navegador (alternativa)",
+      generating: "A preparar áudio…",
+      neuralHelp: "Voz neural gerada neste computador/servidor, sem subscrição. Português de Portugal (Piper) ou inglês dos EUA (Kokoro). A primeira passagem pode demorar alguns segundos; retomar continua no mesmo ponto.",
+      neuralUnavailable: "As vozes neurais não estão disponíveis neste servidor. Consulte a instalação de voz no README ou use a alternativa do navegador.",
+      neuralFailed: "Não foi possível gerar ou reproduzir o áudio. Tente novamente.",
+      tapResume: "Prima Retomar para iniciar o áudio neste navegador.",
+      busy: "O leitor está ocupado. Aguarde alguns segundos e tente novamente.",
+      auth: "Inicie sessão novamente para usar a leitura neural.",
+
+      title: "Leitura em voz alta",
+      play: "Ouvir artigo",
+      pause: "Pausar",
+      resume: "Retomar",
+      stop: "Parar",
+      close: "Fechar",
+      language: "Idioma",
+      voice: "Voz",
+      speed: "Velocidade",
+      progress: "Progresso da leitura",
+      empty: "O artigo ainda não tem texto para ler.",
+      failed: "Não foi possível reproduzir esta voz. Escolha outra voz e tente novamente.",
+      unsupported: "Este navegador não suporta leitura em voz alta.",
+      noVoices: "Sem vozes disponíveis. Instale uma voz no sistema ou experimente outro navegador.",
+      help: "Sem subscrição adicional. A qualidade depende das vozes do navegador/sistema; prefira uma voz Natural, Neural ou Premium, quando disponível. Retomar repete a passagem atual. Reiniciar a leitura usa as últimas alterações.",
+    },
     app: {
       name: 'BlogArtifex',
       slogan: 'Editor Avançado para Blogger',
