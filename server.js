@@ -4,6 +4,7 @@ const fs = require('fs');
 const { spawn } = require('child_process');
 const { handleConvert } = require('./docConverter');
 const { handleVoice } = require('./voiceService');
+const { handleAuth } = require('./authService');
 const { handleUpload, serveMedia } = require('./mediaStore');
 
 const DEFAULT_PORT = 3000;
@@ -52,6 +53,11 @@ const requestHandler = (req, res) => {
   } catch (error) {
     res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' });
     return res.end('Bad Request');
+  }
+
+  // Long-lived Google sign-in (see authService.js)
+  if (pathname.startsWith('/api/auth/')) {
+    return handleAuth(req, res, url);
   }
 
   if (pathname === '/api/voice' || pathname === '/api/voice/status') {

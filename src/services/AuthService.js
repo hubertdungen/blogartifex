@@ -147,7 +147,44 @@ const removeAuthToken = (source = 'unknown') => {
 const clearAuthSession = (source = 'unknown') => {
   const removed = removeAuthToken(source);
   removeStoredAccount();
+  // Ends the server-side session too (refresh token revoked); harmless when there is none.
+  fetch('./api/auth/logout', { method: 'POST' }).catch(() => {});
   return removed;
+};
+
+let refreshing = null;
+/**
+ * Asks the server for a new access token (authorization-code sessions only).
+ * @returns {Promise<string|null>} the new token, or null when the sign-in is over
+ */
+const refreshAccessToken = () => {
+  if (!refreshing) {
+    refreshing = (async () => {
+      try {
+        const response = await fetch('./api/auth/refresh', { method: 'POST' });
+        if (!response.ok) {
+          if (response.status === 401) removeAuthToken('refresh-expired');
+          return null;
+        }
+        const data = await response.json();
+        return setAuthToken(data.access_token, data.expires_in) ? data.access_token : null;
+      } catch (error) {
+        log.warn('Token refresh failed', error);
+        return null;
+      } finally {
+        refreshing = null;
+      }
+    })();
+  }
+  return refreshing;
+};
+
+/** Returns a token with at least five minutes left, refreshing it when possible. */
+const ensureFreshToken = async () => {
+  const token = getAuthToken();
+  const expiresAt = Number(localStorage.getItem(EXPIRES_KEY));
+  if (token && (!expiresAt || expiresAt - Date.now() > 5 * 60000)) return token;
+  return (await refreshAccessToken()) || (token && !isTokenExpired() ? token : null);
 };
 
 const fetchJson = async (url, options = {}) => {
@@ -400,6 +437,8 @@ const AuthService = {
   setStoredAccount,
   removeStoredAccount,
   fetchCurrentAccount,
+  refreshAccessToken,
+  ensureFreshToken,
   decodeToken,
   isTokenExpired,
   getUserInfo,

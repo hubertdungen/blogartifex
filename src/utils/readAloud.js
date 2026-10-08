@@ -23,6 +23,15 @@ export function speechChunks(text, limit = 220) {
   return chunks;
 }
 
+// Cheap language guess from common words; null when the text does not lean clearly either way.
+export function detectLanguage(text) {
+  const sample = ' ' + String(text || '').slice(0, 4000).toLowerCase().replace(/[^\p{L}\s]/gu, ' ') + ' ';
+  const count = words => words.reduce((n, w) => n + sample.split(' ' + w + ' ').length - 1, 0);
+  const pt = count(['de', 'que', 'não', 'uma', 'para', 'com', 'os', 'do', 'da', 'é', 'em', 'mais', 'por', 'como', 'mas', 'isso', 'são', 'também', 'ao', 'dos', 'das', 'já', 'ele', 'ela', 'seu', 'sua', 'foi', 'muito', 'até', 'onde']);
+  const en = count(['the', 'and', 'of', 'to', 'in', 'is', 'that', 'it', 'for', 'was', 'with', 'as', 'on', 'be', 'at', 'by', 'this', 'have', 'from', 'or', 'are', 'not', 'but', 'they', 'his', 'her', 'which', 'you', 'were', 'there']);
+  return en > pt * 1.2 ? 'en-US' : pt > en * 1.2 ? 'pt-PT' : null;
+}
+
 export function rankVoices(voices, language) {
   const score = voice => {
     const lang = voice.lang.replace('_', '-').toLowerCase();

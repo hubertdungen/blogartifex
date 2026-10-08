@@ -414,9 +414,15 @@ const translations = {
           appearance: 'Appearance',
           api: 'API Settings',
           dataManagement: 'Data Management',
-          debug: 'Debugging'
+          debug: 'Debugging',
+          readAloud: 'Read aloud'
         },
         fields: {
+        voiceAutoLanguage: 'Detect the article language and pick the preferred voice',
+        voiceAutoLanguageDesc: 'When read aloud opens, the article is analysed and the preferred voice for that language is selected.',
+        voicePtPT: 'Preferred voice · European Portuguese:',
+        voiceEnUS: 'Preferred voice · English (US):',
+        voiceDefault: 'First available voice',
         defaultBlog: 'Default Blog:',
         defaultBlogDesc: 'Blog selected by default when creating a new post.',
         defaultTemplate: 'Default Template:',

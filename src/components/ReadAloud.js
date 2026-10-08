@@ -4,8 +4,8 @@ import BrowserReadAloud from './BrowserReadAloud';
 import ReadAloudVolume, { useReadAloudVolume } from './ReadAloudVolume';
 import AuthService from '../services/AuthService';
 import i18n, { t } from '../services/I18nService';
-import { getStoredValue, setStoredValue } from '../utils/storage';
-import { articleText, speechChunks } from '../utils/readAloud';
+import { getStoredJson, getStoredValue, setStoredValue } from '../utils/storage';
+import { articleText, speechChunks, detectLanguage } from '../utils/readAloud';
 import '../styles/readAloud.css';
 
 export default function ReadAloud(props) {
@@ -23,7 +23,13 @@ export default function ReadAloud(props) {
 
 export function NeuralReadAloud({ title, content, onClose }) {
   const [voices, setVoices] = useState(null);
-  const [voiceId, setVoiceId] = useState(() => getStoredValue('blogartifex_neural_voice', 'pt_PT-tugao'));
+  const [voiceId, setVoiceId] = useState(() => {
+    // Preferred voice for the article's language (Settings), else the last voice used.
+    const settings = getStoredJson('blogartifex_settings', {});
+    const lang = settings.voiceAutoLanguage !== false && detectLanguage(articleText(title, content));
+    const preferred = lang && (settings[lang === 'en-US' ? 'voiceEnUS' : 'voicePtPT'] || { 'en-US': 'af_heart', 'pt-PT': 'pt_PT-tugao' }[lang]);
+    return preferred || getStoredValue('blogartifex_neural_voice', 'pt_PT-tugao');
+  });
   const [rate, setRate] = useState(() => {
     const saved = Number(getStoredValue('blogartifex_speech_rate', '1'));
     return saved >= .5 && saved <= 2 ? saved : 1;

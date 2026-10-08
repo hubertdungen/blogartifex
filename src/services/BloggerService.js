@@ -87,16 +87,15 @@ const cacheResponse = (key, data) => {
  */
 const request = async (endpoint, options = {}) => {
   // Get auth token
-  const token = AuthService.getAuthToken();
-  if (!token) {
+  if (!AuthService.getAuthToken() && !(await AuthService.refreshAccessToken())) {
     log.error('No authentication token found');
     const authError = new Error('Authentication required. Please log in.');
     authError.code = 'AUTH';
     throw authError;
   }
   
-  // Validate token format and expiration
-  if (!AuthService.validateToken()) {
+  // Validate token format and expiration; a renewable session gets a new token first.
+  if (!AuthService.validateToken() && !(await AuthService.refreshAccessToken())) {
     log.warn('Token validation failed, removing invalid token');
     AuthService.removeAuthToken('BloggerService-invalid');
     const authError = new Error('Authentication session expired or invalid. Please log in again.');
@@ -104,6 +103,7 @@ const request = async (endpoint, options = {}) => {
     throw authError;
   }
   
+  const token = AuthService.getAuthToken();
   // Prepare request URL
   const url = `${API_BASE_URL}${endpoint}`;
   
@@ -179,6 +179,9 @@ const request = async (endpoint, options = {}) => {
     // Handle authentication errors
     if (response.status === 401) {
       log.error('Authentication error (401)');
+      if (!options.retried && await AuthService.refreshAccessToken()) {
+        return request(endpoint, { ...options, retried: true });
+      }
       
       // Parse response for details
       const errorData = isJson ? await response.json() : await response.text();

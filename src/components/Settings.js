@@ -35,8 +35,17 @@ function Settings({ theme, toggleTheme }) {
     defaultPublishStatus: 'draft',
     wideLayout: false,
     contentAlignment: 'center',
-    showDebugger: false
+    showDebugger: false,
+    voiceAutoLanguage: true,
+    voicePtPT: '',
+    voiceEnUS: ''
   });
+  const [voices, setVoices] = useState([]);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch('./api/voice/status', { signal: controller.signal }).then(r => r.json()).then(d => setVoices(Array.isArray(d.voices) ? d.voices : [])).catch(() => {});
+    return () => controller.abort();
+  }, []);
   const [error, setError] = useState(null);
 
   // Definições do assistente de IA
@@ -116,7 +125,7 @@ function Settings({ theme, toggleTheme }) {
    */
   const handleSettingChange = (e, setting) => {
     const value =
-      setting === 'autoBackup' || setting === 'confirmBeforeDelete' || setting === 'wideLayout' || setting === 'showDebugger'
+      ['autoBackup', 'confirmBeforeDelete', 'wideLayout', 'showDebugger', 'voiceAutoLanguage'].includes(setting)
         ? e.target.checked
         : setting === 'autoSaveInterval'
           ? parseInt(e.target.value, 10)
@@ -403,6 +412,32 @@ function Settings({ theme, toggleTheme }) {
               </div>
             </div>
             
+            <div className="setting-group">
+              <h2>{t('settings.sections.readAloud')}</h2>
+
+              <div className="setting-item">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={settings.voiceAutoLanguage !== false}
+                    onChange={(e) => handleSettingChange(e, 'voiceAutoLanguage')}
+                  />
+                  {t('settings.fields.voiceAutoLanguage')}
+                </label>
+                <p className="setting-description">{t('settings.fields.voiceAutoLanguageDesc')}</p>
+              </div>
+
+              {[['voicePtPT', 'pt-PT'], ['voiceEnUS', 'en-US']].map(([key, lang]) => (
+                <div className="setting-item" key={key}>
+                  <label htmlFor={key}>{t('settings.fields.' + key)}</label>
+                  <select id={key} value={settings[key] || ''} onChange={(e) => handleSettingChange(e, key)}>
+                    <option value="">{t('settings.fields.voiceDefault')}</option>
+                    {voices.filter(v => v.lang === lang).map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+                  </select>
+                </div>
+              ))}
+            </div>
+
             <div className="setting-group">
               <h2>{t('settings.sections.appearance')}</h2>
 

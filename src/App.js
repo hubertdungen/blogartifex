@@ -85,6 +85,19 @@ const AuthenticatedLayout = ({ children, theme, toggleTheme }) => {
 
 // Main App component
 function App() {
+  // With a server-side session, renew the Google token before the first route decides
+  // whether we are signed in, and keep renewing while the app stays open.
+  const [authReady, setAuthReady] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!AuthService.getAuthToken() || AuthService.isTokenExpired()) await AuthService.refreshAccessToken();
+      if (!cancelled) setAuthReady(true);
+    })();
+    const timer = setInterval(() => { AuthService.ensureFreshToken(); }, 5 * 60000);
+    return () => { cancelled = true; clearInterval(timer); };
+  }, []);
+
   const [theme, setTheme] = useState(() => {
     const savedTheme = getStoredValue('theme');
     return savedTheme || 'dark'; // Default to dark theme
@@ -137,6 +150,7 @@ function App() {
     setStoredValue('theme', theme);
   }, [theme]);
 
+  if (!authReady) return null;
   return (
     <HashRouter>
       <div className={`app-container ${theme}`}>

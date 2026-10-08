@@ -414,9 +414,15 @@ const translations = {
           appearance: 'Aparência',
           api: 'Definições da API',
           dataManagement: 'Gestão de Dados',
-          debug: 'Depuração'
+          debug: 'Depuração',
+          readAloud: 'Leitura em voz alta'
         },
         fields: {
+        voiceAutoLanguage: 'Detetar a língua do artigo e escolher a voz preferida',
+        voiceAutoLanguageDesc: 'Ao abrir a leitura em voz alta, o artigo é analisado e a voz preferida dessa língua fica selecionada.',
+        voicePtPT: 'Voz preferida · Português de Portugal:',
+        voiceEnUS: 'Voz preferida · English (USA):',
+        voiceDefault: 'Primeira voz disponível',
         defaultBlog: 'Blogue Predefinido:',
         defaultBlogDesc: 'Blogue selecionado por predefinição ao criar um novo artigo.',
         defaultTemplate: 'Modelo Predefinido:',
