@@ -34,7 +34,7 @@ export function NeuralReadAloud({ title, content, onClose }) {
   const [position, setPosition] = useState(0);
   const [total, setTotal] = useState(0);
   const player = useRef(null);
-  const session = useRef({ generation: 0, controller: null, url: null, chunks: [], index: 0, prefetch: null });
+  const session = useRef({ generation: 0, controller: null, url: null, chunks: [], index: 0, cache: {}, prefetching: false });
   const voice = voices?.find(item => item.id === voiceId) || voices?.[0];
 
   useEffect(() => {
@@ -52,6 +52,20 @@ export function NeuralReadAloud({ title, content, onClose }) {
     return () => controller.abort();
   }, []);
 
+  function clearCache() {
+    const current = session.current;
+    if (current.cache) {
+      Object.keys(current.cache).forEach(key => {
+        const entry = current.cache[key];
+        if (entry.url) {
+          URL.revokeObjectURL(entry.url);
+        }
+      });
+      current.cache = {};
+    }
+    current.url = null;
+  }
+
   useEffect(() => {
     const current = session.current;
     const audio = player.current;
@@ -59,7 +73,7 @@ export function NeuralReadAloud({ title, content, onClose }) {
       current.generation++;
       current.controller?.abort();
       if (audio) { audio.pause(); audio.removeAttribute('src'); audio.load(); }
-      if (current.url) URL.revokeObjectURL(current.url);
+      clearCache();
     };
   }, []);
 
@@ -68,23 +82,112 @@ export function NeuralReadAloud({ title, content, onClose }) {
     current.generation++;
     current.controller?.abort();
     current.controller = null;
-    current.prefetch = null;
     const audio = player.current;
     if (audio) { audio.pause(); audio.removeAttribute('src'); audio.load(); }
-    if (current.url) URL.revokeObjectURL(current.url);
     current.url = null;
     setStatus('idle');
     setPosition(0);
   }
 
   async function generate(text, signal) {
-    const response = await fetch('./api/voice', {
-      method: 'POST', signal,
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${AuthService.getAuthToken()}` },
-      body: JSON.stringify({ text, voice: voice.id, rate })
-    });
-    if (!response.ok) throw new Error(response.status === 429 ? 'busy' : response.status === 401 ? 'auth' : 'neuralFailed');
-    return response.blob();
+    for (let attempt = 0; ; attempt++) {
+      const response = await fetch('./api/voice', {
+        method: 'POST', signal,
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${AuthService.getAuthToken()}` },
+        body: JSON.stringify({ text, voice: voice.id, rate })
+      });
+      if (response.ok) return response.blob();
+      // The engine serves one passage at a time; wait for it rather than failing the whole reading.
+      if (response.status === 429 && attempt < 30) {
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(resolve, 2000);
+          signal?.addEventListener('abort', () => { clearTimeout(timer); reject(new DOMException('Aborted', 'AbortError')); }, { once: true });
+        });
+        continue;
+      }
+      throw new Error(response.status === 429 ? 'busy' : response.status === 401 ? 'auth' : 'neuralFailed');
+    }
+  }
+
+  function fetchChunk(index, signal) {
+    const current = session.current;
+    if (!current.cache) current.cache = {};
+
+    if (current.cache[index]) {
+      return current.cache[index];
+    }
+
+    const promise = generate(current.chunks[index], signal).then(
+      blob => {
+        if (signal && signal.aborted) {
+          delete current.cache[index];
+          throw new Error('aborted');
+        }
+        const url = URL.createObjectURL(blob);
+        const entry = { blob, url, promise: null };
+        current.cache[index] = entry;
+        return entry;
+      },
+      error => {
+        delete current.cache[index];
+        throw error;
+      }
+    );
+
+    const entry = { blob: null, url: null, promise };
+    current.cache[index] = entry;
+    return entry;
+  }
+
+  async function processPrefetchQueue(generation) {
+    const current = session.current;
+    if (generation !== current.generation) return;
+    if (current.prefetching === generation) return;
+
+    current.prefetching = generation;
+    try {
+      while (generation === current.generation) {
+        // First, check if the current playing index is still fetching.
+        // If it is, wait for it to finish so we do not run concurrent backend synthesis.
+        const curIndex = current.index;
+        if (curIndex < current.chunks.length) {
+          const curEntry = current.cache && current.cache[curIndex];
+          if (curEntry && curEntry.promise) {
+            try {
+              await curEntry.promise;
+            } catch {
+              // Ignore, passage will handle it
+            }
+            continue;
+          }
+        }
+
+        // Find the first index in prefetch window [current.index + 1, current.index + 3] that needs prefetching
+        let targetIndex = -1;
+        for (let i = 1; i <= 3; i++) {
+          const idx = current.index + i;
+          if (idx < current.chunks.length && (!current.cache || !current.cache[idx])) {
+            targetIndex = idx;
+            break;
+          }
+        }
+
+        if (targetIndex === -1) {
+          break;
+        }
+
+        const entry = fetchChunk(targetIndex, current.controller.signal);
+        if (entry.promise) {
+          await entry.promise;
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+    } catch {
+      // background prefetching errors can be ignored
+    } finally {
+      if (current.prefetching === generation) current.prefetching = false;
+    }
   }
 
   async function passage(index, generation) {
@@ -93,24 +196,46 @@ export function NeuralReadAloud({ title, content, onClose }) {
     setPosition(index);
     setStatus('loading');
     try {
-      const result = current.prefetch || generate(current.chunks[index], current.controller.signal).then(blob => ({ blob }), error => ({ error }));
-      current.prefetch = null;
-      const { blob, error: failure } = await result;
+      // Trigger background sequential prefetching of the next 3 passages
+      processPrefetchQueue(generation);
+
+      // Clean up cache entries outside [index - 3, index + 3] window
+      if (current.cache) {
+        Object.keys(current.cache).forEach(key => {
+          const k = parseInt(key, 10);
+          if (k < index - 3 || k > index + 3) {
+            const oldEntry = current.cache[k];
+            if (oldEntry) {
+              if (oldEntry.url) URL.revokeObjectURL(oldEntry.url);
+              delete current.cache[k];
+            }
+          }
+        });
+      }
+
+      const entry = fetchChunk(index, current.controller.signal);
+      let chunkData;
+      if (entry.promise) {
+        try {
+          chunkData = await entry.promise;
+        } catch (err) {
+          if (generation !== current.generation) return;
+          throw err;
+        }
+      } else {
+        chunkData = entry;
+      }
+
       if (generation !== current.generation) return;
-      if (failure) throw failure;
       const audio = player.current;
-      if (current.url) URL.revokeObjectURL(current.url);
-      current.url = URL.createObjectURL(blob);
-      audio.src = current.url;
+      current.url = chunkData.url;
+      audio.src = chunkData.url;
       audio.onended = () => {
         if (generation !== current.generation) return;
         if (index + 1 < current.chunks.length) passage(index + 1, generation);
         else { setPosition(current.chunks.length); setStatus('idle'); }
       };
-      // Keep just one passage ahead, so large articles don't fill memory.
-      if (index + 1 < current.chunks.length) {
-        current.prefetch = generate(current.chunks[index + 1], current.controller.signal).then(blob => ({ blob }), error => ({ error }));
-      }
+
       try { await audio.play(); if (generation === current.generation) setStatus('playing'); }
       catch { if (generation === current.generation) { setStatus('paused'); setError(t('speech.tapResume')); } }
     } catch (failure) {
@@ -131,6 +256,10 @@ export function NeuralReadAloud({ title, content, onClose }) {
     stop();
     const chunks = speechChunks(articleText(title, content), 600);
     if (!chunks.length) { setError(t('speech.empty')); return; }
+    const isSameChunks = current.chunks && current.chunks.length === chunks.length && current.chunks.every((val, idx) => val === chunks[idx]);
+    if (!isSameChunks) {
+      clearCache();
+    }
     current.chunks = chunks;
     current.controller = new AbortController();
     setTotal(chunks.length);
@@ -164,11 +293,11 @@ export function NeuralReadAloud({ title, content, onClose }) {
       </button>
       <button type="button" disabled={status === 'idle'} onClick={stop}><span aria-hidden="true">⏹</span> {t('speech.stop')}</button>
       <label>{t('speech.voice')} <select value={voice?.id || ''} disabled={!voice} onChange={event => {
-        stop(); setVoiceId(event.target.value); setStoredValue('blogartifex_neural_voice', event.target.value);
+        stop(); clearCache(); setVoiceId(event.target.value); setStoredValue('blogartifex_neural_voice', event.target.value);
       }}>{voices?.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
       <ReadAloudVolume volume={volume} onChange={changeVolume} />
       <label>{t('speech.speed')} <select value={rate} onChange={event => {
-        stop(); setRate(Number(event.target.value)); setStoredValue('blogartifex_speech_rate', event.target.value);
+        stop(); clearCache(); setRate(Number(event.target.value)); setStoredValue('blogartifex_speech_rate', event.target.value);
       }}>{[.5, .75, 1, 1.25, 1.5, 2].map(value => <option key={value} value={value}>{value}×</option>)}</select></label>
     </div>
     <audio ref={player} controls={total > 0} preload="auto"

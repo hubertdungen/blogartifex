@@ -1,0 +1,4 @@
+# Install torch/torchaudio CPU wheels first; see setup-advanced.py.
+tts_eu_pt==0.1.1
+sopro==2.2.0
+kittenml==0.9.4

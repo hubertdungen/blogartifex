@@ -749,6 +749,7 @@ function Dashboard() {
                   <div className="posts-list">
                     {displayedPosts.map(post => (
                       <div key={post.id} className="post-item">
+                        <div className="post-thumbnail-wrap">
                         {post.images && post.images.length > 0 ? (
                           <img
                             src={post.images[0].url}
@@ -760,6 +761,13 @@ function Dashboard() {
                             {(post.title || '?').trim().charAt(0).toUpperCase()}
                           </div>
                         )}
+
+                          <button type="button" className="post-listen-overlay" disabled={speechLoading === post.id}
+                            aria-label={`${t('speech.play')}: ${post.title}`} title={t('speech.play')}
+                            aria-busy={speechLoading === post.id} onClick={() => handleListenPost(post.id)}>
+                            <span aria-hidden="true">{speechLoading === post.id ? '…' : '▶'}</span>
+                          </button>
+                        </div>
 
                         <div className="post-info">
                           <h3>{post.title}</h3>
@@ -790,7 +798,6 @@ function Dashboard() {
                         
                         {/* Post actions */}
                         <div className="post-actions">
-                          <button type="button" disabled={speechLoading === post.id} onClick={() => handleListenPost(post.id)}>{speechLoading === post.id ? t("common.loading") : t("speech.play")}</button>
                           <button
                             className="edit-button"
                             onClick={() => handleEditPost(post.id)}

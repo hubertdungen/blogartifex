@@ -11,7 +11,7 @@ const translations = {
       seek: 'Posição no artigo',
       passages: 'Escolher passagem',
       seekHelp: 'Clica na barra ou numa passagem para ouvir a partir daí. A barra do áudio permite navegar dentro da passagem atual.',
-      neuralHelp: "Voz neural gerada neste computador/servidor, sem subscrição. Português de Portugal (Piper) ou inglês dos EUA (Kokoro). A primeira passagem pode demorar alguns segundos; retomar continua no mesmo ponto.",
+      neuralHelp: 'Voz neural gerada neste computador/servidor, sem subscrição. Escolhe uma voz de português de Portugal ou inglês dos EUA. A primeira passagem pode demorar alguns segundos; retomar continua no mesmo ponto.',
       neuralUnavailable: "As vozes neurais não estão disponíveis neste servidor. Consulte a instalação de voz no README ou use a alternativa do navegador.",
       neuralFailed: "Não foi possível gerar ou reproduzir o áudio. Tente novamente.",
       tapResume: "Prima Retomar para iniciar o áudio neste navegador.",

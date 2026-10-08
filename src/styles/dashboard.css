@@ -607,3 +607,16 @@
       align-items: flex-start;
     }
   }
+
+/* A small play affordance expands gently when the thumbnail is hovered/focused. */
+.post-thumbnail-wrap { position: relative; width: 80px; height: 80px; flex-shrink: 0; border-radius: 4px; overflow: hidden; }
+.post-thumbnail-wrap .post-thumbnail { display: block; width: 100%; height: 100%; }
+.post-listen-overlay { position: absolute; inset: 0; display: flex; justify-content: flex-end; align-items: flex-end; padding: 5px; background: transparent; border: 0; cursor: pointer; transition: background .25s ease; }
+.post-listen-overlay span { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; color: white; background: rgba(15,23,42,.65); font-size: 10px; box-shadow: 0 2px 8px #0002; transition: transform .25s ease, background .25s ease; }
+.post-thumbnail-wrap:hover .post-listen-overlay, .post-thumbnail-wrap:focus-within .post-listen-overlay { background: linear-gradient(transparent,rgba(15,23,42,.45)); }
+.post-thumbnail-wrap:hover .post-listen-overlay span, .post-listen-overlay:focus-visible span { transform: translate(-19px,-19px) scale(1.3); background: rgba(15,23,42,.85); }
+.post-listen-overlay:focus-visible { outline: 2px solid #a78bfa; outline-offset: -2px; }
+.post-listen-overlay:disabled { cursor: wait; }
+@media (max-width: 768px) { .post-thumbnail-wrap { width: 60px; height: 60px; } .post-thumbnail-wrap:hover .post-listen-overlay span, .post-listen-overlay:focus-visible span { transform: translate(-9px,-9px) scale(1.2); } }
+@media (prefers-reduced-motion: reduce) { .post-listen-overlay, .post-listen-overlay span { transition: none; } }
+.post-thumbnail-wrap .post-thumbnail.no-image { display: flex; }

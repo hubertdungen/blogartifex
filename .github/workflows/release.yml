@@ -39,7 +39,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Package installer scripts (models downloaded separately)
-        run: zip -r blogartifex-neural-voice-setup.zip voice/setup.py voice/worker.py voice/requirements.txt setup-voices.sh setup-voices.bat README.md README_PT.md
+        run: zip -r blogartifex-neural-voice-setup.zip voice/setup.py voice/setup-advanced.py voice/worker.py voice/requirements.txt voice/advanced-requirements.txt setup-voices.sh setup-voices.bat README.md README_PT.md
       - name: Upload installer
         env:
           GH_TOKEN: ${{ github.token }}

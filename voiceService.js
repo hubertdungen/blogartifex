@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 const readline = require('readline');
+const { timingSafeEqual } = require('crypto');
 const { send, authorise, readBody } = require('./apiAuth');
 
 // For packaged releases, runtime/model files live beside the executable.
@@ -11,13 +12,26 @@ const workerFile = path.join(root, 'voice/worker.py');
 const modelDir = path.join(root, 'voice/models');
 const VOICES = [
   { id: 'pt_PT-tugao', name: 'Tugão · Português de Portugal', lang: 'pt-PT' },
-  { id: 'af_heart', name: 'Heart · English (USA)', lang: 'en-US' }
+  { id: 'af_heart', name: 'Heart · Kokoro · English (USA)', lang: 'en-US' },
+  ...[['af_bella','Bella'],['af_nicole','Nicole'],['af_sarah','Sarah'],['am_michael','Michael'],['am_fenrir','Fenrir']].map(([id,name]) => ({ id, name: name + ' · Kokoro · English (USA)', lang: 'en-US' })),
+  ...['miro','dii'].map(name => ({ id: 'phoonnx_'+name, name: name[0].toUpperCase()+name.slice(1)+' · Portugal · uso não comercial', lang: 'pt-PT' })),
+  { id: 'kokoro_eu_pt', name: 'Tuga · Kokoro · Português de Portugal', lang: 'pt-PT' },
+  { id: 'sopro_pt_PT', name: 'Sopro · referência Tugão · Português de Portugal', lang: 'pt-PT' },
+  { id: 'sopro_en_US', name: 'Sopro · referência Heart · English (USA)', lang: 'en-US' },
+  ...['Bella','Jasper','Luna','Bruno','Rosie','Hugo','Kiki','Leo'].map(name => ({ id: 'kitten_'+name, name: name + ' · Kitten · English (USA)', lang: 'en-US' }))
 ];
 const availableVoices = () => {
   if (!fs.existsSync(python) || !fs.existsSync(workerFile)) return [];
   const kokoro = ['kokoro-v1.0.int8.onnx', 'voices-v1.0.bin'].every(name => fs.existsSync(path.join(modelDir, name)));
   const piper = ['pt_PT-tugao-medium.onnx', 'pt_PT-tugao-medium.onnx.json'].every(name => fs.existsSync(path.join(modelDir, name)));
-  return VOICES.filter(voice => voice.id === 'pt_PT-tugao' ? piper : kokoro);
+  return VOICES.filter(voice => {
+    if (voice.id === 'pt_PT-tugao') return piper;
+    if (voice.id.startsWith('phoonnx_')) return fs.existsSync(path.join(modelDir, 'phoonnx-'+voice.id.slice(8)+'/ready.json'));
+    if (voice.id === 'kokoro_eu_pt') return fs.existsSync(path.join(modelDir, 'kokoro-eu-pt/ready.json'));
+    if (voice.id.startsWith('sopro_')) return fs.existsSync(path.join(modelDir, 'sopro/ready.json'));
+    if (voice.id.startsWith('kitten_')) return fs.existsSync(path.join(modelDir, 'kitten/ready.json'));
+    return kokoro;
+  });
 };
 let worker;
 let pending;
@@ -74,7 +88,18 @@ async function handleVoice(req, res, url) {
     return send(res, 200, { available: voices.length > 0, voices });
   }
   if (req.method !== 'POST') return send(res, 405, { error: 'method' }, { Allow: 'POST' });
-  if (!await authorise(req, res)) return;
+  // An optional server-to-server bridge lets the local reader reuse this worker.
+  // The secret is never sent to a browser; external callers still use Google auth.
+  let bridge = false;
+  const remote = req.socket?.remoteAddress;
+  if (['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(remote) && process.env.BLOGARTIFEX_VOICE_BRIDGE_KEY_FILE) {
+    try {
+      const expected = Buffer.from(fs.readFileSync(process.env.BLOGARTIFEX_VOICE_BRIDGE_KEY_FILE, 'utf8').trim());
+      const supplied = Buffer.from(req.headers['x-voice-bridge'] || '');
+      bridge = expected.length >= 32 && expected.length === supplied.length && timingSafeEqual(expected, supplied);
+    } catch { /* A missing bridge key must never bypass normal authentication. */ }
+  }
+  if (!bridge && !await authorise(req, res)) return;
   let payload;
   try {
     payload = JSON.parse((await readBody(req, 16000)).toString('utf8'));

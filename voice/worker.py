@@ -10,12 +10,14 @@ import wave
 os.environ.setdefault('OMP_NUM_THREADS', '2')
 os.environ.setdefault('OPENBLAS_NUM_THREADS', '2')
 MODELS = Path(__file__).resolve().parent / 'models'
-VOICES = {'pt_PT-tugao': 'pt-pt', 'af_heart': 'en-us'}
+VOICES = {'pt_PT-tugao': 'pt-pt', **{v: 'en-us' for v in ['af_heart','af_bella','af_nicole','af_sarah','am_michael','am_fenrir']}, 'kokoro_eu_pt': 'pt-pt', 'phoonnx_miro': 'pt-pt', 'phoonnx_dii': 'pt-pt', 'sopro_pt_PT': 'pt-pt', 'sopro_en_US': 'en-us', **{'kitten_'+v: 'en-us' for v in ['Bella','Jasper','Luna','Bruno','Rosie','Hugo','Kiki','Leo']}}
 kokoro = None
 piper = None
+advanced = {}
+active_advanced = None
 
 def synthesize(payload):
-    global kokoro, piper
+    global kokoro, piper, active_advanced
     voice = payload['voice']
     text = payload['text']
     rate = float(payload.get('rate', 1))
@@ -28,6 +30,65 @@ def synthesize(payload):
             piper = PiperVoice.load(str(MODELS / 'pt_PT-tugao-medium.onnx'))
         with wave.open(output, 'wb') as wav:
             piper.synthesize_wav(text, wav, syn_config=SynthesisConfig(length_scale=1 / rate))
+    elif voice == 'kokoro_eu_pt' or voice.startswith(('sopro_', 'kitten_', 'phoonnx_')):
+        import soundfile as sf
+        family = ('phoonnx-' + voice.removeprefix('phoonnx_')) if voice.startswith('phoonnx_') else 'sopro' if voice.startswith('sopro_') else 'kitten' if voice.startswith('kitten_') else 'kokoro-eu-pt'
+        # Keep at most one extra model resident on small CPU servers.
+        if active_advanced != family:
+            advanced.clear()
+            import gc
+            gc.collect()
+            active_advanced = family
+        if family.startswith('phoonnx-'):
+            from phoonnx.voice import TTSVoice
+            from phoonnx.config import SynthesisConfig
+            name = voice.removeprefix('phoonnx_')
+            if family not in advanced:
+                advanced[family] = TTSVoice.load(str(MODELS / family / (name + '_pt-PT.onnx')), str(MODELS / family / (name + '_pt-PT.json')))
+            with wave.open(output, 'wb') as wav:
+                advanced[family].synthesize_wav(text, wav, syn_config=SynthesisConfig(length_scale=1 / rate))
+            return output.getvalue()
+        if family == 'kokoro-eu-pt':
+            import torch
+            torch.set_num_threads(2)
+            from loguru import logger
+            logger.disable('tts_eu_pt')
+            from tts_eu_pt import TTS
+            if family not in advanced:
+                advanced[family] = TTS(device='cpu', model_path=str(MODELS / family / 'tuga_kokoro.pth'), voicepack_path=str(MODELS / family / 'tuga_voicepack.pt'))
+            samples = advanced[family].say(text, speed=rate)
+        elif family == 'kitten':
+            from kittenml.kittentts_legacy import KittenTTSOnnx
+            if family not in advanced:
+                advanced[family] = KittenTTSOnnx(model_name=str(MODELS / family), backend='cpu')
+                import onnxruntime as ort
+                options = ort.SessionOptions()
+                options.intra_op_num_threads = 2
+                options.inter_op_num_threads = 1
+                advanced[family].model.session = ort.InferenceSession(str(MODELS / family / 'kitten_tts_nano_v0_8.onnx'), sess_options=options, providers=['CPUExecutionProvider'])
+            samples = advanced[family].generate(text, voice=voice.removeprefix('kitten_'), speed=rate)
+        else:
+            import torch
+            torch.set_num_threads(2)
+            from sopro import SoproTTS
+            if family not in advanced:
+                advanced[family] = SoproTTS.from_pretrained(str(MODELS / family), device='cpu', quantization='int8')
+            language = 'pt' if voice == 'sopro_pt_PT' else 'en'
+            ref_key = 'ref_' + language
+            if ref_key not in advanced:
+                advanced[ref_key] = advanced[family].prepare_reference(ref_audio_path=str(MODELS / family / ('reference-' + language + '.wav')))
+            samples = advanced[family].synthesize(text, ref=advanced[ref_key], lang=language, steps=2).detach().cpu().numpy().reshape(-1)
+            # Preserve pitch when changing Sopro's speaking speed.
+            if rate != 1:
+                import math
+                from torchaudio.functional import phase_vocoder
+                waveform = torch.from_numpy(samples.copy())
+                window = torch.hann_window(1024)
+                spectrum = torch.stft(waveform, n_fft=1024, hop_length=256, window=window, return_complex=True)
+                phase = torch.linspace(0, math.pi * 256, spectrum.shape[-2])[..., None]
+                stretched = phase_vocoder(spectrum, rate, phase)
+                samples = torch.istft(stretched, n_fft=1024, hop_length=256, window=window, length=max(1, round(len(samples) / rate))).numpy()
+        sf.write(output, samples, 24000, format='WAV', subtype='PCM_16')
     else:
         import onnxruntime as ort
         from kokoro_onnx import Kokoro
