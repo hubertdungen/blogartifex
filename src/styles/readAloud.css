@@ -14,3 +14,10 @@
 
 .read-aloud-volume input[type="range"] { width: 120px; max-width: 100%; padding: 0; cursor: pointer; }
 .read-aloud-volume-value { min-width: 4ch; font-variant-numeric: tabular-nums; }
+.read-aloud audio { width: 100%; margin-top: 12px; }
+.read-aloud-navigation label { display: block; }
+.read-aloud-navigation input { display: block; width: 100%; cursor: pointer; }
+.read-aloud-navigation summary { cursor: pointer; padding: 8px 0; }
+.read-aloud-passages { display: grid; gap: 6px; max-height: 280px; overflow-y: auto; }
+.read-aloud-passages button { text-align: left; white-space: pre-wrap; }
+.read-aloud-passages button[aria-current="true"] { outline: 2px solid currentColor; }

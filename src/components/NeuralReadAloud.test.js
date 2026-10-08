@@ -71,11 +71,32 @@ test('adjusts volume during playback without regenerating audio and restores the
   expect(localStorage.getItem('blogartifex_speech_volume')).toBe('0.35');
   expect(fetch).toHaveBeenCalledTimes(2);
   expect(play).toHaveBeenCalledTimes(1);
-  fireEvent.change(screen.getByRole('slider'), { target: { value: '0' } });
+  fireEvent.change(screen.getByRole('slider', { name: /Volume/ }), { target: { value: '0' } });
   expect(view.container.querySelector('audio').volume).toBe(0);
   view.unmount();
   const restored = render(<NeuralReadAloud title="Title" content="Text" />);
-  expect(screen.getByRole('slider')).toHaveValue('0');
+  expect(screen.getByRole('slider', { name: /Volume/ })).toHaveValue('0');
   expect(restored.container.querySelector('audio').volume).toBe(0);
   await act(async () => {});
+});
+
+
+test('seeks to the chosen passage and ignores the old playback callback', async () => {
+  const view = render(<NeuralReadAloud title="Title" content={'Sentence with words. '.repeat(90)} />);
+  await waitFor(() => expect(screen.getByText('Ouvir artigo')).toBeEnabled());
+  fetch.mockResolvedValue({ ok: true, blob: async () => new Blob(['wav']) });
+  fireEvent.click(screen.getByText('Ouvir artigo'));
+  await waitFor(() => expect(play).toHaveBeenCalledTimes(1));
+  const oldEnded = view.container.querySelector('audio').onended;
+  const oldSignal = fetch.mock.calls[1][1].signal;
+  fireEvent.change(screen.getByRole('slider', { name: /Posição no artigo/ }), { target: { value: '2' } });
+  await waitFor(() => expect(play).toHaveBeenCalledTimes(2));
+  expect(oldSignal.aborted).toBe(true);
+  const count = fetch.mock.calls.length;
+  await act(async () => oldEnded());
+  expect(fetch).toHaveBeenCalledTimes(count);
+  expect(screen.getByRole('slider', { name: /Posição no artigo/ })).toHaveValue('2');
+  fireEvent.click(view.container.querySelector('.read-aloud-passages button'));
+  await waitFor(() => expect(play).toHaveBeenCalledTimes(3));
+  expect(screen.getByRole('slider', { name: /Posição no artigo/ })).toHaveValue('0');
 });

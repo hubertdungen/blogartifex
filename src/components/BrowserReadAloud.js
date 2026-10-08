@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import ReadAloudNavigation from './ReadAloudNavigation';
 import ReadAloudVolume, { useReadAloudVolume } from './ReadAloudVolume';
 import i18n, { t } from '../services/I18nService';
 import { getStoredValue, setStoredValue } from '../utils/storage';
@@ -93,6 +94,12 @@ export default function BrowserReadAloud({ title, content, onClose }) {
     speak(0);
   }
 
+  function seek(index) {
+    stop();
+    setError('');
+    speak(index);
+  }
+
   function pause() {
     // Resume from the current short passage: reliable across mobile engines.
     session.current.generation++;
@@ -131,7 +138,7 @@ export default function BrowserReadAloud({ title, content, onClose }) {
       }}>{[0.5, 0.75, 1, 1.25, 1.5, 2].map(value => <option key={value} value={value}>{value}×</option>)}</select></label>
     </div>
     <p className="read-aloud-help">{t('speech.help')}</p>
-    {total > 0 && <progress aria-label={t('speech.progress')} value={position} max={total} />}
+    {total > 0 && <ReadAloudNavigation chunks={session.current.chunks} position={position} onSeek={seek} />}
     <span role="status">{!supported ? t('speech.unsupported') : !sorted.length ? t('speech.noVoices') : error}</span>
   </section>;
 }

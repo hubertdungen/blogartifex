@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import ReadAloudNavigation from './ReadAloudNavigation';
 import BrowserReadAloud from './BrowserReadAloud';
 import ReadAloudVolume, { useReadAloudVolume } from './ReadAloudVolume';
 import AuthService from '../services/AuthService';
@@ -136,6 +137,17 @@ export function NeuralReadAloud({ title, content, onClose }) {
     passage(0, current.generation);
   }
 
+  function seek(index) {
+    const current = session.current;
+    const chunks = current.chunks;
+    if (!chunks.length) return;
+    stop();
+    setError('');
+    current.chunks = chunks;
+    current.controller = new AbortController();
+    passage(index, current.generation);
+  }
+
   function pause() { player.current.pause(); setStatus('paused'); }
 
   return <section className="read-aloud" aria-label={t('speech.title')}>
@@ -159,9 +171,11 @@ export function NeuralReadAloud({ title, content, onClose }) {
         stop(); setRate(Number(event.target.value)); setStoredValue('blogartifex_speech_rate', event.target.value);
       }}>{[.5, .75, 1, 1.25, 1.5, 2].map(value => <option key={value} value={value}>{value}×</option>)}</select></label>
     </div>
-    <audio ref={player} preload="auto" onError={() => { if (session.current.url) { stop(); setError(t('speech.neuralFailed')); } }} />
+    <audio ref={player} controls={total > 0} preload="auto"
+      onPlay={() => { if (session.current.url) setStatus('playing'); }}
+      onPause={() => { if (session.current.url && !player.current.ended) setStatus('paused'); }} onError={() => { if (session.current.url) { stop(); setError(t('speech.neuralFailed')); } }} />
     <p className="read-aloud-help">{t('speech.neuralHelp')}</p>
-    {total > 0 && <progress aria-label={t('speech.progress')} value={position} max={total} />}
+    {total > 0 && <ReadAloudNavigation chunks={session.current.chunks} position={position} onSeek={seek} />}
     <span role="status">{voices === null ? t('common.loading') : !voices.length ? t('speech.neuralUnavailable') : error || (status === 'loading' ? t('speech.generating') : '')}</span>
   </section>;
 }
