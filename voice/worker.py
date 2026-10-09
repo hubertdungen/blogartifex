@@ -12,6 +12,14 @@ os.environ.setdefault('OPENBLAS_NUM_THREADS', '2')
 MODELS = Path(__file__).resolve().parent / 'models'
 PIPER = {'pt_PT-tugao': 'pt_PT-tugao-medium.onnx', 'pt_PT-voice3': 'pt_PT-voice3.onnx', 'pt_PT-voice4': 'pt_PT-voice4.onnx'}  # Piper/VITS models (espeak pt-PT phonemes)
 VOICES = {**{v: 'pt-pt' for v in PIPER}, **{v: 'en-us' for v in ['af_heart','af_bella','af_nicole','af_sarah','am_michael','am_fenrir']}, 'kokoro_eu_pt': 'pt-pt', 'phoonnx_miro': 'pt-pt', 'phoonnx_dii': 'pt-pt', 'sopro_pt_PT': 'pt-pt', 'sopro_en_US': 'en-us', **{'kitten_'+v: 'en-us' for v in ['Bella','Jasper','Luna','Bruno','Rosie','Hugo','Kiki','Leo']}}
+# Own Sopro voices: drop a clean WAV of the speaker in models/sopro/ref as <Nome>.pt.wav (or .en.wav); it appears as sopro_ref_<Nome>.
+REF_DIR = MODELS / 'sopro' / 'ref'
+def sopro_ref(voice):
+    if not voice.startswith('sopro_ref_') or not REF_DIR.is_dir(): return None
+    for f in REF_DIR.iterdir():
+        parts = f.name.split('.')
+        if len(parts) == 3 and parts[2].lower() == 'wav' and parts[1] in ('pt', 'en') and 'sopro_ref_' + parts[0] == voice: return f, parts[1]
+    return None
 kokoro = None
 piper = {}
 advanced = {}
@@ -22,7 +30,8 @@ def synthesize(payload):
     voice = payload['voice']
     text = payload['text']
     rate = float(payload.get('rate', 1))
-    if voice not in VOICES or not isinstance(text, str) or not 0 < len(text) <= 1800 or not 0.5 <= rate <= 2:
+    ref = sopro_ref(voice)
+    if (voice not in VOICES and not ref) or not isinstance(text, str) or not 0 < len(text) <= 1800 or not 0.5 <= rate <= 2:
         raise ValueError('Invalid synthesis request')
     output = io.BytesIO()
     if voice in PIPER:
@@ -74,10 +83,10 @@ def synthesize(payload):
             from sopro import SoproTTS
             if family not in advanced:
                 advanced[family] = SoproTTS.from_pretrained(str(MODELS / family), device='cpu', quantization='int8')
-            language = 'pt' if voice == 'sopro_pt_PT' else 'en'
-            ref_key = 'ref_' + language
+            language = ref[1] if ref else 'pt' if voice == 'sopro_pt_PT' else 'en'
+            ref_key = 'ref_' + (voice if ref else language)
             if ref_key not in advanced:
-                advanced[ref_key] = advanced[family].prepare_reference(ref_audio_path=str(MODELS / family / ('reference-' + language + '.wav')))
+                advanced[ref_key] = advanced[family].prepare_reference(ref_audio_path=str(ref[0] if ref else MODELS / family / ('reference-' + language + '.wav')))
             samples = advanced[family].synthesize(text, ref=advanced[ref_key], lang=language, steps=2).detach().cpu().numpy().reshape(-1)
             # Preserve pitch when changing Sopro's speaking speed.
             if rate != 1:

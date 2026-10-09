@@ -26,14 +26,17 @@ const availableVoices = () => {
   if (!fs.existsSync(python) || !fs.existsSync(workerFile)) return [];
   const kokoro = ['kokoro-v1.0.int8.onnx', 'voices-v1.0.bin'].every(name => fs.existsSync(path.join(modelDir, name)));
   const piper = ['pt_PT-tugao-medium.onnx', 'pt_PT-tugao-medium.onnx.json'].every(name => fs.existsSync(path.join(modelDir, name)));
-  return VOICES.filter(voice => {
+  // Own Sopro voices: voice/models/sopro/ref/<Nome>.pt.wav or .en.wav
+  const refDir = path.join(modelDir, 'sopro/ref');
+  const own = fs.existsSync(path.join(modelDir, 'sopro/ready.json')) && fs.existsSync(refDir) ? fs.readdirSync(refDir).map(f => f.match(/^([A-Za-z0-9_-]+)\.(pt|en)\.wav$/)).filter(Boolean).map(m => ({ id: 'sopro_ref_' + m[1], name: m[1].replace(/[_-]+/g, ' ') + ' · Sopro · voz própria · ' + (m[2] === 'pt' ? 'Português de Portugal' : 'English (USA)'), lang: m[2] === 'pt' ? 'pt-PT' : 'en-US' })) : [];
+  return own.concat(VOICES.filter(voice => {
     if (voice.id === 'pt_PT-tugao') return piper;
     if (voice.id.startsWith('phoonnx_')) return fs.existsSync(path.join(modelDir, 'phoonnx-'+voice.id.slice(8)+'/ready.json'));
     if (voice.id === 'kokoro_eu_pt') return fs.existsSync(path.join(modelDir, 'kokoro-eu-pt/ready.json'));
     if (voice.id.startsWith('sopro_')) return fs.existsSync(path.join(modelDir, 'sopro/ready.json'));
     if (voice.id.startsWith('kitten_')) return fs.existsSync(path.join(modelDir, 'kitten/ready.json'));
     return kokoro;
-  });
+  }));
 };
 let worker;
 let pending;
@@ -107,7 +110,7 @@ async function handleVoice(req, res, url) {
     payload = JSON.parse((await readBody(req, 16000)).toString('utf8'));
     if (!payload || typeof payload.text !== 'string' || !payload.text.trim() || payload.text.length > 1800
       || typeof payload.rate !== 'number' || !Number.isFinite(payload.rate) || payload.rate < 0.5 || payload.rate > 2
-      || !VOICES.some(voice => voice.id === payload.voice)) throw new Error('invalid');
+      || !(VOICES.some(voice => voice.id === payload.voice) || /^sopro_ref_[A-Za-z0-9_-]+$/.test(payload.voice))) throw new Error('invalid');
   } catch (error) { return send(res, error.status || 400, { error: 'invalid-request' }); }
   if (!availableVoices().some(voice => voice.id === payload.voice)) return send(res, 503, { error: 'voice-unavailable' });
   if (reserved) return send(res, 429, { error: 'busy' }, { 'Retry-After': '2' });
