@@ -12,6 +12,8 @@ const workerFile = path.join(root, 'voice/worker.py');
 const modelDir = path.join(root, 'voice/models');
 const VOICES = [
   { id: 'pt_PT-tugao', name: 'Tugão · Português de Portugal', lang: 'pt-PT' },
+  { id: 'pt_PT-voice3', name: 'Voz 3 · OpenVoiceOS · tom médio · Português de Portugal', lang: 'pt-PT' },
+  { id: 'pt_PT-voice4', name: 'Voz 4 · OpenVoiceOS · tom grave · Português de Portugal', lang: 'pt-PT' },
   { id: 'af_heart', name: 'Heart · Kokoro · English (USA)', lang: 'en-US' },
   ...[['af_bella','Bella'],['af_nicole','Nicole'],['af_sarah','Sarah'],['am_michael','Michael'],['am_fenrir','Fenrir']].map(([id,name]) => ({ id, name: name + ' · Kokoro · English (USA)', lang: 'en-US' })),
   ...['miro','dii'].map(name => ({ id: 'phoonnx_'+name, name: name[0].toUpperCase()+name.slice(1)+' · Portugal · uso não comercial', lang: 'pt-PT' })),

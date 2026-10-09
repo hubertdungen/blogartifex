@@ -10,9 +10,10 @@ import wave
 os.environ.setdefault('OMP_NUM_THREADS', '2')
 os.environ.setdefault('OPENBLAS_NUM_THREADS', '2')
 MODELS = Path(__file__).resolve().parent / 'models'
-VOICES = {'pt_PT-tugao': 'pt-pt', **{v: 'en-us' for v in ['af_heart','af_bella','af_nicole','af_sarah','am_michael','am_fenrir']}, 'kokoro_eu_pt': 'pt-pt', 'phoonnx_miro': 'pt-pt', 'phoonnx_dii': 'pt-pt', 'sopro_pt_PT': 'pt-pt', 'sopro_en_US': 'en-us', **{'kitten_'+v: 'en-us' for v in ['Bella','Jasper','Luna','Bruno','Rosie','Hugo','Kiki','Leo']}}
+PIPER = {'pt_PT-tugao': 'pt_PT-tugao-medium.onnx', 'pt_PT-voice3': 'pt_PT-voice3.onnx', 'pt_PT-voice4': 'pt_PT-voice4.onnx'}  # Piper/VITS models (espeak pt-PT phonemes)
+VOICES = {**{v: 'pt-pt' for v in PIPER}, **{v: 'en-us' for v in ['af_heart','af_bella','af_nicole','af_sarah','am_michael','am_fenrir']}, 'kokoro_eu_pt': 'pt-pt', 'phoonnx_miro': 'pt-pt', 'phoonnx_dii': 'pt-pt', 'sopro_pt_PT': 'pt-pt', 'sopro_en_US': 'en-us', **{'kitten_'+v: 'en-us' for v in ['Bella','Jasper','Luna','Bruno','Rosie','Hugo','Kiki','Leo']}}
 kokoro = None
-piper = None
+piper = {}
 advanced = {}
 active_advanced = None
 
@@ -24,12 +25,12 @@ def synthesize(payload):
     if voice not in VOICES or not isinstance(text, str) or not 0 < len(text) <= 1800 or not 0.5 <= rate <= 2:
         raise ValueError('Invalid synthesis request')
     output = io.BytesIO()
-    if voice == 'pt_PT-tugao':
+    if voice in PIPER:
         from piper import PiperVoice, SynthesisConfig
-        if piper is None:
-            piper = PiperVoice.load(str(MODELS / 'pt_PT-tugao-medium.onnx'))
+        if voice not in piper:
+            piper[voice] = PiperVoice.load(str(MODELS / PIPER[voice]))
         with wave.open(output, 'wb') as wav:
-            piper.synthesize_wav(text, wav, syn_config=SynthesisConfig(length_scale=1 / rate))
+            piper[voice].synthesize_wav(text, wav, syn_config=SynthesisConfig(length_scale=1 / rate))
     elif voice == 'kokoro_eu_pt' or voice.startswith(('sopro_', 'kitten_', 'phoonnx_')):
         import soundfile as sf
         family = ('phoonnx-' + voice.removeprefix('phoonnx_')) if voice.startswith('phoonnx_') else 'sopro' if voice.startswith('sopro_') else 'kitten' if voice.startswith('kitten_') else 'kokoro-eu-pt'
