@@ -28,7 +28,7 @@ const availableVoices = () => {
   const piper = ['pt_PT-tugao-medium.onnx', 'pt_PT-tugao-medium.onnx.json'].every(name => fs.existsSync(path.join(modelDir, name)));
   // Own Sopro voices: voice/models/sopro/ref/<Nome>.pt.wav or .en.wav
   const refDir = path.join(modelDir, 'sopro/ref');
-  const own = fs.existsSync(path.join(modelDir, 'sopro/ready.json')) && fs.existsSync(refDir) ? fs.readdirSync(refDir).map(f => f.match(/^([A-Za-z0-9_-]+)\.(pt|en)\.wav$/)).filter(Boolean).map(m => ({ id: 'sopro_ref_' + m[1], name: m[1].replace(/[_-]+/g, ' ') + ' · Sopro · voz própria · ' + (m[2] === 'pt' ? 'Português de Portugal' : 'English (USA)'), lang: m[2] === 'pt' ? 'pt-PT' : 'en-US' })) : [];
+  const own = fs.existsSync(path.join(modelDir, 'sopro/ready.json')) && fs.existsSync(refDir) ? fs.readdirSync(refDir).map(f => f.match(/^([A-Za-z0-9_-]+)\.(pt|en)\.(wav|mp3|flac|ogg)$/i)).filter(Boolean).map(m => ({ id: 'sopro_ref_' + m[1], name: m[1].replace(/[_-]+/g, ' ') + ' · Sopro · voz própria · ' + (m[2] === 'pt' ? 'Português de Portugal' : 'English (USA)'), lang: m[2] === 'pt' ? 'pt-PT' : 'en-US' })) : [];
   return own.concat(VOICES.filter(voice => {
     if (voice.id === 'pt_PT-tugao') return piper;
     if (voice.id.startsWith('phoonnx_')) return fs.existsSync(path.join(modelDir, 'phoonnx-'+voice.id.slice(8)+'/ready.json'));

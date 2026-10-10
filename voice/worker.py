@@ -18,7 +18,16 @@ def sopro_ref(voice):
     if not voice.startswith('sopro_ref_') or not REF_DIR.is_dir(): return None
     for f in REF_DIR.iterdir():
         parts = f.name.split('.')
-        if len(parts) == 3 and parts[2].lower() == 'wav' and parts[1] in ('pt', 'en') and 'sopro_ref_' + parts[0] == voice: return f, parts[1]
+        if len(parts) == 3 and parts[2].lower() in ('wav', 'mp3', 'flac', 'ogg') and parts[1] in ('pt', 'en') and 'sopro_ref_' + parts[0] == voice:
+            if parts[2].lower() != 'wav':  # decode once to WAV (libsndfile reads mp3/flac/ogg); Sopro gets the cached copy
+                import soundfile as sf
+                cache = REF_DIR / '.cache'; cache.mkdir(exist_ok=True); out = cache / (parts[0] + '.' + parts[1] + '.wav')
+                if not out.exists() or out.stat().st_mtime < f.stat().st_mtime:
+                    data, sr = sf.read(str(f), dtype='float32')
+                    if getattr(data, 'ndim', 1) > 1: data = data.mean(axis=1)
+                    sf.write(str(out), data, sr, subtype='PCM_16')
+                return out, parts[1]
+            return f, parts[1]
     return None
 kokoro = None
 piper = {}
