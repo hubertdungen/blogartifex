@@ -34,6 +34,84 @@ piper = {}
 advanced = {}
 active_advanced = None
 
+HOP = 256  # VITS: one duration unit = 256 samples
+SENTENCE_END = __import__('re').compile(r'[.!?…]+[»”"\')\]]*$')
+def piper_timed(voice, text, rate):
+    """Piper synthesis plus the real start/end of every word, from the model's own phoneme durations.
+    The timings travel inside the WAV as a 'lect' RIFF chunk: [[char offset in text, start s, end s], ...]."""
+    import re
+    import numpy as np
+    from piper.const import BOS, EOS, PAD
+    cfg, idmap = voice.config, voice.config.phoneme_id_map
+    sr = cfg.sample_rate
+    tokens = [(m.start(), m.group()) for m in re.finditer(r'\S+', text)]
+    # Text sentences the way espeak splits them: a token ending in . ! ? … (closing quotes allowed).
+    text_sentences, current = [], []
+    for t in tokens:
+        current.append(t)
+        if SENTENCE_END.search(t[1]): text_sentences.append(current); current = []
+    if current: text_sentences.append(current)
+    audio_parts, engine_sentences, offset = [], [], 0
+    for phonemes in voice.phonemize(text):
+        ids, owner = list(idmap[BOS]) + list(idmap[PAD]), [-1, -1]
+        for k, ph in enumerate(phonemes):
+            if ph not in idmap: continue
+            ids += list(idmap[ph]) + list(idmap[PAD]); owner += [k] * (len(idmap[ph]) + 1)
+        ids += list(idmap[EOS]); owner.append(-1)
+        scales = np.array([cfg.noise_scale, cfg.length_scale / rate, cfg.noise_w_scale], dtype=np.float32)
+        args = {'input': np.array([ids], dtype=np.int64), 'input_lengths': np.array([len(ids)], dtype=np.int64), 'scales': scales}
+        if cfg.num_speakers > 1: args['sid'] = np.array([0], dtype=np.int64)
+        audio, dur = voice.session.run(None, args)
+        audio, dur = audio.reshape(-1), dur.reshape(-1)
+        peak = float(np.max(np.abs(audio))) if audio.size else 0
+        audio_parts.append(audio / peak if peak > 1e-8 else audio)
+        # Engine words: phonemes between spaces; a word ends where its punctuation (the pause) begins.
+        words, t, word = [], offset, None
+        for pos, d in enumerate(dur.astype(int).tolist()):
+            k = owner[pos]; ph = phonemes[k] if k >= 0 else None
+            if ph is not None and ph != ' ' and ph not in ',.;:!?…' and word is None: word = [t, t, 0]
+            if ph == ' ' or (ph is not None and ph in ',.;:!?…'):
+                if word: words.append(word); word = None
+            elif ph is not None and word is not None:
+                word[1] = t + d * HOP; word[2] += 1
+            t += d * HOP
+        if word: words.append(word)
+        engine_sentences.append(words)
+        offset += audio.shape[0]
+    pairs = text_sentences if len(text_sentences) == len(engine_sentences) else [tokens]
+    engines = engine_sentences if len(text_sentences) == len(engine_sentences) else [sum(engine_sentences, [])]
+    timings = []
+    for toks, words in zip(pairs, engines):
+        spoken = [t for t in toks if re.search(r'\w', t[1])]
+        if not spoken or not words: continue
+        if len(spoken) == len(words):
+            timings += [[t[0], w[0] / sr, w[1] / sr] for t, w in zip(spoken, words)]; continue
+        # Different word counts (numbers read out, abbreviations): place each text word by its share of the
+        # sentence, snapped to the nearest engine word start that keeps the order.
+        tw = [max(1, len(re.sub(r'\W', '', t[1])) * (4 if t[1][:1].isdigit() else 1)) for t in spoken]
+        span0, span1, total, acc, last, starts = words[0][0], words[-1][1], sum(tw), 0, -1, []
+        for x in tw:
+            guess = span0 + (span1 - span0) * acc / total; acc += x
+            options = [w[0] for w in words if w[0] > last]
+            near = min(options, key=lambda v: abs(v - guess)) if options else guess
+            starts.append(near if abs(near - guess) < (span1 - span0) / max(1, len(tw)) else max(guess, last + 1))
+            last = starts[-1]
+        for i, t in enumerate(spoken):
+            end = starts[i + 1] if i + 1 < len(spoken) else span1
+            timings.append([t[0], starts[i] / sr, max(starts[i], end) / sr])
+    samples = np.clip(np.concatenate(audio_parts) * 32767, -32767, 32767).astype('<i2') if audio_parts else np.zeros(0, '<i2')
+    out = io.BytesIO()
+    with wave.open(out, 'wb') as wav:
+        wav.setnchannels(1); wav.setsampwidth(2); wav.setframerate(sr); wav.writeframes(samples.tobytes())
+    return with_timings(out.getvalue(), timings)
+
+def with_timings(data, timings):
+    import struct
+    body = json.dumps({'v': 1, 'words': [[o, round(a, 3), round(b, 3)] for o, a, b in timings]}, separators=(',', ':')).encode()
+    if len(body) % 2: body += b' '
+    data = data + b'lect' + struct.pack('<I', len(body)) + body
+    return data[:4] + struct.pack('<I', len(data) - 8) + data[8:]
+
 def synthesize(payload):
     global kokoro, piper, active_advanced
     voice = payload['voice']
@@ -45,8 +123,12 @@ def synthesize(payload):
     output = io.BytesIO()
     if voice in PIPER:
         from piper import PiperVoice, SynthesisConfig
+        timed = MODELS / PIPER[voice].replace('.onnx', '.timed.onnx')
         if voice not in piper:
-            piper[voice] = PiperVoice.load(str(MODELS / PIPER[voice]))
+            # The ".timed" copy also outputs the duration of every phoneme (same weights, one extra graph output).
+            piper[voice] = PiperVoice.load(str(timed), config_path=str(MODELS / (PIPER[voice] + '.json'))) if timed.exists() else PiperVoice.load(str(MODELS / PIPER[voice]))
+        if len(piper[voice].session.get_outputs()) > 1:
+            return piper_timed(piper[voice], text, rate)
         with wave.open(output, 'wb') as wav:
             piper[voice].synthesize_wav(text, wav, syn_config=SynthesisConfig(length_scale=1 / rate))
     elif voice == 'kokoro_eu_pt' or voice.startswith(('sopro_', 'kitten_', 'phoonnx_')):
