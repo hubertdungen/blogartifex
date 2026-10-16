@@ -38,6 +38,13 @@ const availableVoices = () => {
     return kokoro;
   }));
 };
+// The engine runs in its own systemd user scope with a low CPU weight: when anything else needs the processor
+// (Jellyfin, shares, the desktop) the kernel gives it way at once. The Lectoria tunes the scope's CPUQuota
+// (time running, other apps, temperature). Without a user systemd it simply runs as a plain child.
+const runtimeDir = process.env.XDG_RUNTIME_DIR || `/run/user/${process.getuid?.() ?? 1000}`;
+const scoped = process.platform === 'linux' && process.env.BLOGARTIFEX_VOICE_SCOPE !== '0' && (() => {
+  try { return require('child_process').spawnSync('systemd-run', ['--user', '--scope', '--quiet', '--collect', 'true'], { env: { ...process.env, XDG_RUNTIME_DIR: runtimeDir }, timeout: 10000 }).status === 0; } catch { return false; }
+})();
 let worker;
 let pending;
 let idleTimer;
@@ -54,7 +61,9 @@ function generate(payload) {
   clearTimeout(idleTimer);
   return new Promise((resolve, reject) => {
     if (!worker) {
-      const child = spawn(python, ['-u', workerFile], { stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
+      const child = scoped
+        ? spawn('systemd-run', ['--user', '--scope', '--quiet', '--collect', '--unit=voz-motor-' + Date.now(), '-p', 'CPUWeight=20', python, '-u', workerFile], { stdio: ['pipe', 'pipe', 'pipe'], env: { ...process.env, XDG_RUNTIME_DIR: runtimeDir } })
+        : spawn(python, ['-u', workerFile], { stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
       worker = child;
       // Never log article text or Python diagnostics that may include it.
       child.stderr.on('data', () => {});
@@ -123,7 +132,7 @@ async function handleVoice(req, res, url) {
     releaseWorker();
   };
   res.on('close', cancel);
-  const timeout = setTimeout(cancel, 120000);
+  const timeout = setTimeout(cancel, bridge ? 900000 : 120000); // a throttled background passage may take minutes
   try {
     const wav = await generate({ text: payload.text, voice: payload.voice, rate: payload.rate });
     if (!cancelled) send(res, 200, wav, { 'Content-Type': 'audio/wav', 'X-Content-Type-Options': 'nosniff' });
