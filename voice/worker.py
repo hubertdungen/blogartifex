@@ -112,6 +112,25 @@ def with_timings(data, timings):
     data = data + b'lect' + struct.pack('<I', len(body)) + body
     return data[:4] + struct.pack('<I', len(data) - 8) + data[8:]
 
+# Own voices whose reference is broadcast-bright: Sopro copies the harsh 4-10 kHz, so tame it on the output
+# (EQ on the reference itself changes the speaker and sounds "adulterated"). Chosen by ear 2026-10-21 ("suave").
+SOFTEN = {'sopro_ref_odisseia'}
+def soften(samples, sr, keep_peak=True):
+    import numpy as np, torch, torchaudio.functional as AF
+    peak = float(np.abs(samples).max()) or 1.0
+    t = AF.equalizer_biquad(torch.from_numpy(np.asarray(samples, dtype=np.float32))[None], sr, 4800, -3.0, Q=1.0)
+    t = AF.treble_biquad(t, sr, -3.0, central_freq=7500)[0]
+    # De-esser: cut >4.5 kHz by up to 4 dB only in frames where that band dominates (sibilants).
+    n, h = 1024, 256; w = torch.hann_window(n)
+    X = torch.stft(t, n, h, window=w, return_complex=True)
+    band = torch.fft.rfftfreq(n, 1 / sr) > 4500
+    P = X.abs() ** 2; ratio = P[band].sum(0) / (P.sum(0) + 1e-12)
+    g = (-(ratio - 0.35).clamp(min=0) / 0.65 * 8).clamp(min=-4.0)
+    g = torch.from_numpy(np.convolve(g.numpy(), np.ones(5) / 5, 'same')).float()
+    X[band] = X[band] * (10 ** (g / 20))[None, :]
+    y = torch.istft(X, n, h, window=w, length=t.shape[-1]).numpy()
+    return y * (peak / (float(np.abs(y).max()) or 1.0)) if keep_peak else y
+
 def synthesize(payload):
     global kokoro, piper, active_advanced
     voice = payload['voice']
@@ -189,6 +208,8 @@ def synthesize(payload):
                 phase = torch.linspace(0, math.pi * 256, spectrum.shape[-2])[..., None]
                 stretched = phase_vocoder(spectrum, rate, phase)
                 samples = torch.istft(stretched, n_fft=1024, hop_length=256, window=window, length=max(1, round(len(samples) / rate))).numpy()
+            if voice in SOFTEN:
+                samples = soften(samples, 24000)
         sf.write(output, samples, 24000, format='WAV', subtype='PCM_16')
     else:
         import onnxruntime as ort
