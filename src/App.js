@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ForgeBrand from './components/ForgeBrand';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
@@ -235,7 +236,7 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
-      <footer style={{textAlign:"center",padding:"12px",fontSize:12}}><a href="https://dlforge.dungenlabs.com" target="_blank" rel="noopener noreferrer" style={{display:"inline-flex",alignItems:"center",gap:8,color:"inherit"}}><img src="./dlforge-logo.svg" alt="" width="76" height="36" style={{background:"#f2ede6",borderRadius:6,padding:4,objectFit:"contain"}} /><span>DL Forge</span></a></footer>
+      <footer style={{textAlign:"center",padding:"12px",fontSize:12}}><ForgeBrand /></footer>
     </HashRouter>
   );
 }

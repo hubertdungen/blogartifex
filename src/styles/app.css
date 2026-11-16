@@ -1074,3 +1074,16 @@ body.dark .tox-statusbar {
     font-size: 0.9rem;
   }
 }
+
+/* logótipo DL Forge: contorno suave; ao passar o rato desenha-se e enche-se de leve */
+.forge-link{display:inline-flex;align-items:center;justify-content:center;color:inherit;text-decoration:none}
+.fgm{width:76px;height:36px;flex:none;overflow:visible;vertical-align:middle;transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+.fgm .a,.fgm .c{fill-opacity:0;stroke-width:13;stroke-linejoin:round;stroke-linecap:round;transition:fill-opacity .45s}
+.fgm .a{fill:currentColor;stroke:currentColor;stroke-opacity:.78}
+.fgm .c{fill:#e87e6a;stroke:#e87e6a}
+@media (hover:hover){
+.forge-link:hover .fgm,.forge-link:focus-visible .fgm{transform:translateY(-1px)}
+.forge-link:hover .fgm .a,.forge-link:hover .fgm .c,.forge-link:focus-visible .fgm .a,.forge-link:focus-visible .fgm .c{fill-opacity:.2;stroke-dasharray:1;animation:fgd .9s ease both;animation-delay:calc(var(--i)*55ms)}
+}
+@keyframes fgd{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+@media (prefers-reduced-motion:reduce){.forge-link:hover .fgm *{animation:none}}
