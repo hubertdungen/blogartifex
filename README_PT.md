@@ -379,4 +379,4 @@ A alternativa **Voz do navegador** limita também as vozes a PT-PT e en-US. Não
 Modelos e bibliotecas externos: [Kokoro / Apache 2.0](https://huggingface.co/hexgrad/Kokoro-82M), [kokoro-onnx / MIT](https://github.com/thewh1teagle/kokoro-onnx), [Piper / GPL-3.0](https://github.com/OHF-Voice/piper1-gpl), [voz Tugão / dataset CC0](https://huggingface.co/rhasspy/piper-voices/blob/main/pt/pt_PT/tug%C3%A3o/medium/MODEL_CARD). O instalador descarrega estes componentes separadamente; não os inclui no código-fonte nem nos binários BlogArtifex.
 
 
-<p align="center"><a href="https://dlforge.dungenlabs.com"><img src="docs/branding/dlforge-logo.svg" alt="DL Forge" width="120"></a><br><a href="https://dlforge.dungenlabs.com">DL Forge</a></p>
+<p align="center"><a href="https://dlforge.dungenlabs.com"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/branding/dlforge-logo-negative.svg"><source media="(prefers-color-scheme: light)" srcset="docs/branding/dlforge-logo.svg"><img src="docs/branding/dlforge-logo.svg" alt="DL Forge" width="120"></picture></a><br><a href="https://dlforge.dungenlabs.com">DL Forge</a></p>
