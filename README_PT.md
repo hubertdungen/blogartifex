@@ -377,3 +377,6 @@ Ao usar `npm start`, execute também `npm run serve` na porta 3000 (ou ajuste o 
 A alternativa **Voz do navegador** limita também as vozes a PT-PT e en-US. Não instala vozes e a sua qualidade depende do sistema. O leitor não altera os artigos publicados nem acrescenta áudio ao blogue público.
 
 Modelos e bibliotecas externos: [Kokoro / Apache 2.0](https://huggingface.co/hexgrad/Kokoro-82M), [kokoro-onnx / MIT](https://github.com/thewh1teagle/kokoro-onnx), [Piper / GPL-3.0](https://github.com/OHF-Voice/piper1-gpl), [voz Tugão / dataset CC0](https://huggingface.co/rhasspy/piper-voices/blob/main/pt/pt_PT/tug%C3%A3o/medium/MODEL_CARD). O instalador descarrega estes componentes separadamente; não os inclui no código-fonte nem nos binários BlogArtifex.
+
+
+<p align="center"><a href="https://dlforge.dungenlabs.com"><img src="docs/branding/dlforge-logo.svg" alt="DL Forge" width="120"></a><br><a href="https://dlforge.dungenlabs.com">DL Forge</a></p>

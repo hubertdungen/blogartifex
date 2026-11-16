@@ -357,3 +357,6 @@ Install Python 3.10+ and run `npm run voice:setup`, then `npm run build` and `np
 Development: run the API server on port 3000 alongside `npm start` (or adjust package.json's proxy). Static hosting and standalone Android do not run the Python worker; choose the browser alternative there. That alternative also restricts voices to pt-PT and en-US. Reading is inside BlogArtifex; it does not add an audio player to the public blog.
 
 External components are downloaded separately: [Kokoro (Apache 2.0)](https://huggingface.co/hexgrad/Kokoro-82M), [kokoro-onnx (MIT)](https://github.com/thewh1teagle/kokoro-onnx), [Piper (GPL-3.0)](https://github.com/OHF-Voice/piper1-gpl), and [Tugão voice (CC0 dataset)](https://huggingface.co/rhasspy/piper-voices/blob/main/pt/pt_PT/tug%C3%A3o/medium/MODEL_CARD). They are not embedded into BlogArtifex source or portable binaries.
+
+
+<p align="center"><a href="https://dlforge.dungenlabs.com"><img src="docs/branding/dlforge-logo.svg" alt="DL Forge" width="120"></a><br><a href="https://dlforge.dungenlabs.com">DL Forge</a></p>
