@@ -359,4 +359,4 @@ Development: run the API server on port 3000 alongside `npm start` (or adjust pa
 External components are downloaded separately: [Kokoro (Apache 2.0)](https://huggingface.co/hexgrad/Kokoro-82M), [kokoro-onnx (MIT)](https://github.com/thewh1teagle/kokoro-onnx), [Piper (GPL-3.0)](https://github.com/OHF-Voice/piper1-gpl), and [Tugão voice (CC0 dataset)](https://huggingface.co/rhasspy/piper-voices/blob/main/pt/pt_PT/tug%C3%A3o/medium/MODEL_CARD). They are not embedded into BlogArtifex source or portable binaries.
 
 
-<p align="center"><a href="https://dlforge.dungenlabs.com"><img src="docs/branding/dlforge-logo.svg#gh-light-mode-only" alt="DL Forge" width="120"><img src="docs/branding/dlforge-logo-negative.svg#gh-dark-mode-only" alt="DL Forge" width="120"></a></p>
+<p align="center"><a href="https://dlforge.dungenlabs.com"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/branding/dlforge-logo-negative.svg"><img src="docs/branding/dlforge-logo.svg" alt="DL Forge" width="120"></picture></a></p>
