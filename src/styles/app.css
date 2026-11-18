@@ -1083,7 +1083,8 @@ body.dark .tox-statusbar {
 .fgm .c{fill:#e87e6a;stroke:#e87e6a}
 @media (hover:hover){
 .forge-link:hover .fgm,.forge-link:focus-visible .fgm{transform:translateY(-1px)}
-.forge-link:hover .fgm .a,.forge-link:hover .fgm .c,.forge-link:focus-visible .fgm .a,.forge-link:focus-visible .fgm .c{fill-opacity:.2;stroke-dasharray:1;animation:fgd .9s ease both;animation-delay:calc(var(--i)*55ms)}
+.forge-link:hover .fgm .a,.forge-link:hover .fgm .c,.forge-link:focus-visible .fgm .a,.forge-link:focus-visible .fgm .c{fill-opacity:.2;stroke-dasharray:1;animation:fgd .9s ease calc(var(--i)*55ms) both,fgf .8s ease 2.6s forwards}
 }
 @keyframes fgd{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+@keyframes fgf{to{fill-opacity:1;stroke-opacity:0;stroke-width:0}}
 @media (prefers-reduced-motion:reduce){.forge-link:hover .fgm *{animation:none}}
